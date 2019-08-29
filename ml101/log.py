@@ -16,6 +16,5 @@ def init() -> None:
 
     logging.root.addHandler(handler)
 
-    logging.getLogger("websockets").setLevel(logging.WARNING)
-    logging.getLogger("asyncio").setLevel(logging.WARNING)
-    logging.getLogger("ccxt").setLevel(logging.WARNING)
+    # logging.getLogger("").setLevel(logging.WARNING)
+
