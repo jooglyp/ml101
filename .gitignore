@@ -1,0 +1,9 @@
+.idea
+.pyenv
+.coverage
+.mypy_cache
+.tox
+htmlcov
+__pycache__
+*/**/__pycache__
+*.egg-info
