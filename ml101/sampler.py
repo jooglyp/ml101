@@ -15,6 +15,6 @@ class DataPreparer:
         """"""
         self.raw_data = None
 
-    def _load(self, csv) -> None:
+    def load(self, csv) -> None:
         """Loads csv into memory as pandas dataframe and applies some transformations."""
         self.raw_data = pandas.read_csv(csv)

@@ -15,4 +15,4 @@ def main():
     LOGGER.info("Loading data from disk...")
 
     with open("/tmp/data.json", "r") as fileobj:
-        dataset._load(fileobj)
+        dataset.load(fileobj)
