@@ -17,6 +17,3 @@ def main():
     with open("/tmp/data.csv", "r") as fileobj:
         dataset.load(fileobj)
     utils.print_delimiter()
-    LOGGER.info(dataset.raw_data)
-
-

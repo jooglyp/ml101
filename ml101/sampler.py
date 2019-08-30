@@ -18,7 +18,7 @@ LOGGER = logging.getLogger(__name__)
 
 class DataPreparer:
     def __init__(self):
-        """"""
+        """Load data and apply PCA."""
         self.raw_data = None
 
     def load(self, csv) -> None:
@@ -26,4 +26,4 @@ class DataPreparer:
         self.raw_data = pandas.read_csv(csv)
 
         pca_application = pca.ApplyPCA(self.raw_data)
-        pca_application.apply_pca()
+        pca_application.coerce_data()

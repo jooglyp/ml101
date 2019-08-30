@@ -20,6 +20,36 @@ class CleanData:
     def __init__(self, raw_data):
         LOGGER.info("Instantiated Data Cleaning Application.")
         self.dataset = raw_data
+        self.categorical_covariates = None
+        self.numerical_covariates = None
+
+    def _coerce_alphanumeric(self, value):
+        """
+
+        Args:
+            value: a vector's row value
+
+        Returns: if value is a number, na, or nan, coerce to float64 or np.nan
+
+        """
+        if value.isdigit():
+            return float(value)
+        elif value == 'na' or value == 'NA' or value == 'NAN' or value == 'nan':
+            return numpy.nan
+
+    @staticmethod
+    def _vector_type(all_strings: bool):
+        """
+
+        Args:
+            all_strings: vector data-type as string evaluated as True or False
+
+        Returns:'str' or 'float64'
+
+        """
+        if bool(all_strings) is False:
+            return 'numerical'
+        return 'str'
 
     def _identify_covariate_types(self) -> dict:
         """
@@ -34,7 +64,10 @@ class CleanData:
             if covariate_dtype == numpy.float64 or covariate_dtype == numpy.int64:
                 covariate_types[column] = self.dataset[column].dtype.name
             else:
-                covariate_types[column] = 'str'
+                series = self.dataset[column].apply(lambda val: self._coerce_alphanumeric(val))
+                # LOGGER.info(series)
+                all_strings = self.dataset[column].str.isnumeric().eq(False).all()
+                covariate_types[column] = self._vector_type(all_strings)
         utils.print_delimiter()
         LOGGER.info(covariate_types)
         return covariate_types
@@ -63,6 +96,32 @@ class CleanData:
 
         """
         return [element for element in covariate_types if element not in categoricals]
+
+    def _generate_variable_metadata(self):
+        """Identify dataframe data-types."""
+        covariate_types = self._identify_covariate_types()
+        self.categorical_covariates = self._identify_categorical_covariates(covariate_types)
+        utils.print_delimiter()
+        LOGGER.info("Categorical Covariates:")
+        LOGGER.info(self.categorical_covariates)
+        self.numerical_covariates = self._identify_numerical_covariates(self.categorical_covariates, covariate_types)
+        utils.print_delimiter()
+        LOGGER.info("Numerical Covariates:")
+        LOGGER.info(self.numerical_covariates)
+
+    def coerce_data(self):
+        """Identify dataframe data-types and coerce dataset to well known datatypes."""
+        self._generate_variable_metadata()
+        for column in list(self.dataset):
+            if column in self.numerical_covariates:
+                LOGGER.info("Numerical Coercion")
+                self.dataset[column] = self.dataset[column].apply(pandas.to_numeric, errors='coerce')
+            elif column in self.categorical_covariates:
+                LOGGER.info("String Coercion")
+                self.dataset[column] = self.dataset[column].astype(str)
+        utils.print_delimiter()
+        LOGGER.info(self.dataset)
+        LOGGER.info(self.dataset.dtypes)
 
 
 class ApplyPCA(CleanData):
@@ -106,11 +165,4 @@ class ApplyPCA(CleanData):
         Returns: pandas dataframe
 
         """
-        covariate_types = self._identify_covariate_types()
-        categorical_covariates = self._identify_categorical_covariates(covariate_types)
-        utils.print_delimiter()
-        LOGGER.info(categorical_covariates)
-        numerical_covariates = self._identify_numerical_covariates(categorical_covariates, covariate_types)
-        utils.print_delimiter()
-        LOGGER.info(numerical_covariates)
         return pandas.DataFrame([])
