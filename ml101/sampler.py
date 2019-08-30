@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import datetime
 import itertools
 import random
@@ -8,6 +9,11 @@ from decimal import Decimal
 
 import numpy
 import pandas
+from sklearn.preprocessing import OneHotEncoder, LabelEncoder
+
+from . import utils
+
+LOGGER = logging.getLogger(__name__)
 
 
 class DataPreparer:
@@ -18,3 +24,53 @@ class DataPreparer:
     def load(self, csv) -> None:
         """Loads csv into memory as pandas dataframe and applies some transformations."""
         self.raw_data = pandas.read_csv(csv)
+
+    @staticmethod
+    def _categorical_encoding(vector: pandas.DataFrame) -> pandas.DataFrame:
+        """
+
+        Args:
+            vector: pandas dataframe of categorical variable to be used as prefix for hot encoding.
+
+        Returns: matrix of integers that correspond to categorical variable.
+
+        """
+        prefix = vector.name
+        dummy = OneHotEncoder()
+        dummy_category = LabelEncoder()
+        categories = numpy.zeros((vector.shape[0], 1))
+        utils.print_delimiter()
+        LOGGER.info(categories)
+
+        categorical_matrix = dummy_category.fit_transform(vector.reshape(-1, 1))
+        categorical_matrix = dummy.fit_transform(categorical_matrix.reshape(-1, 1)).toarray()
+        categorical_matrix = pandas.DataFrame(categorical_matrix[:, 1:])
+
+        encoded_matrix = pandas.DataFrame(numpy.hstack((categories, categorical_matrix)))
+        encoded_matrix.columns = [str(prefix) + str("_") + str(n) for n in list(encoded_matrix.columns)]
+
+        encoded_matrix_df = pandas.DataFrame(encoded_matrix)
+        utils.print_delimiter()
+        LOGGER.info(encoded_matrix_df)
+        return encoded_matrix_df
+
+    def _identify_non_numerical_covariates(self) -> dict:
+        """
+        Identify non-numerical covariates
+        Returns: dictionary of covariate types
+
+        """
+        # TODO: unit test that there are in fact column.name and column.dtype for each column
+        covariate_types = {}
+        for column in self.raw_data:
+            covariate_types[column.name] = column.dtype
+        utils.print_delimiter()
+        LOGGER.info(covariate_types)
+        return covariate_types
+
+    def apply_pca(self) -> pandas.DataFrame:
+        """
+        Identify non-numerical covariates and numerical covariates and apply pca.
+        Returns: pandas dataframe
+
+        """
