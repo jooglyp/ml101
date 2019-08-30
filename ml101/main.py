@@ -19,4 +19,4 @@ def main():
     utils.print_delimiter()
     LOGGER.info(dataset.raw_data)
 
-    dataset.apply_pca()
+
