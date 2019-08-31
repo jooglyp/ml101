@@ -7,6 +7,7 @@ import random
 import typing
 from decimal import Decimal
 import functools
+import heapq
 
 import matplotlib.pyplot as plt
 import numpy
@@ -226,7 +227,25 @@ class ApplyPCA(CleanData):
         return self._concatenate_dataframes(dataframes)
 
     @staticmethod
-    def apply_pca(df: pandas.DataFrame, excluded_variables: list) -> pandas.DataFrame:
+    def yield_top_third_covariates_by_component(component: numpy.ndarray) -> typing.Tuple[list, float]:
+        """
+
+        Args:
+            component: numpy array corresponding to a principal component containing k feature variances
+
+        Returns: list containing indexes of top 1/3 features according to explained variances.
+
+        """
+        target_number_indexes = (component.size // 3)
+
+        abs_components = numpy.array([abs(covariate) for covariate in component])
+
+        target_indexes = heapq.nlargest(target_number_indexes, range(len(abs_components)),
+                                        key=abs_components.__getitem__)
+        LOGGER.info(target_indexes)
+        return target_indexes, sum(abs_components)
+
+    def apply_pca(self, df: pandas.DataFrame, excluded_variables: list) -> pandas.DataFrame:
         """
         Identify non-numerical covariates and numerical covariates and apply pca.
 
@@ -240,11 +259,35 @@ class ApplyPCA(CleanData):
         df = df.drop(excluded_variables, axis=1)  # drop variables that will not covary much due to MAR
         df.dropna(inplace=True)  # drop rows that contain nan across any covariates
 
+        # PCA Transformation:
         z_scaler = StandardScaler()
         z_data = z_scaler.fit_transform(df)
+        z_data_df = pandas.DataFrame(z_data, columns=df.columns)
+        # LOGGER.info(z_data)
+        # LOGGER.info(z_data[0])
         pca = PCA(n_components=4)
-        pca_trafo = pca.fit(z_data)
-        LOGGER.info(dir(pca_trafo))
-        LOGGER.info(pca_trafo.explained_variance_ratio_)
-        plt.semilogy(pca_trafo.explained_variance_ratio_, '--o')
+        pca_model = pca.fit(z_data)
+        X_pc = pca_model.transform(z_data)
+        # LOGGER.info(X_pc)
+        pca_model_inv = pca_model.inverse_transform(numpy.eye(4))
+        LOGGER.info(pca_model_inv)
+
+        # PCA Obtain top 1/3 covariates in each principal component
+        utils.print_delimiter()
+        list_top_third_variances = [self.yield_top_third_covariates_by_component(component)
+                                    for component in pca_model_inv]
+        LOGGER.info(list_top_third_variances)
+
+        raise
+
+        utils.print_delimiter()
+        LOGGER.info("Explained Variance Ratios:")
+        LOGGER.info(pca_model.explained_variance_ratio_)
+        # plt.semilogy(pca_model.explained_variance_ratio_, '--o')
+        # pca_inv_data = pca_model.inverse_transform(numpy.eye(4))
+        # LOGGER.info(pca_inv_data)
+        component_feature_correlation = pandas.DataFrame(pca_model.components_, columns=z_data_df.columns,
+                                                         index=['PC-1', 'PC-2', 'PC-3', 'PC-4'])
+        utils.print_delimiter()
+        LOGGER.info(component_feature_correlation)
         return pandas.DataFrame([])
