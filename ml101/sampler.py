@@ -30,3 +30,6 @@ class DataPreparer:
         cleaned_data = pca_application.yield_clean_data(categorical_restriction=['addr_state', 'zip_code'])
         LOGGER.info(cleaned_data)
         LOGGER.info(cleaned_data.columns)
+        exclude_variables = ['mths_since_last_delinq', 'mths_since_last_record',
+                             *pca_application.yield_categorical_variables]
+        pca_application.apply_pca(cleaned_data, exclude_variables)

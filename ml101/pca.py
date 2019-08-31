@@ -8,9 +8,11 @@ import typing
 from decimal import Decimal
 import functools
 
+import matplotlib.pyplot as plt
 import numpy
 import pandas
-from sklearn.preprocessing import OneHotEncoder, LabelEncoder
+from sklearn.preprocessing import OneHotEncoder, LabelEncoder, StandardScaler
+from sklearn.decomposition import PCA
 
 from . import utils
 
@@ -128,7 +130,7 @@ class ApplyPCA(CleanData):
         super().__init__(raw_data)
         LOGGER.info("Instantiated PCA Application.")
         self.dataset = raw_data
-        self.categorical_map = {}
+        self.categorical_map = {}  # dictionary of tuples
 
     @staticmethod
     def _categorical_encoding(vector: numpy.ndarray, _name: str) -> typing.Tuple[pandas.DataFrame, numpy.ndarray]:
@@ -173,7 +175,7 @@ class ApplyPCA(CleanData):
             encoded_matrix_df, categories = self._categorical_encoding(numpy.array(self.dataset[categorical_covariate]),
                                                                        categorical_covariate)
             encoded_categoricals[categorical_covariate] = encoded_matrix_df
-            self.categorical_map[categorical_covariate] = [categories, encoded_matrix_df.columns]
+            self.categorical_map[categorical_covariate] = (categories, encoded_matrix_df.columns)
             utils.print_delimiter()
         return encoded_categoricals
 
@@ -192,6 +194,15 @@ class ApplyPCA(CleanData):
                                                                   left_index=True, right_index=True, how='outer'), dataframes)
         LOGGER.info("Final Dataset:")
         return datas
+
+    @property
+    def yield_categorical_variables(self) -> list:
+        """Return a list of all categorical variable names."""
+        covariates = []
+        for mapping in self.categorical_map.items():
+            covariates.append([*list(mapping[1][1])])
+        flattened_list = list(itertools.chain(*covariates))
+        return flattened_list
 
     def yield_clean_data(self, categorical_restriction: list = None) -> pandas.DataFrame:
         """
@@ -214,10 +225,25 @@ class ApplyPCA(CleanData):
         dataframes = [numerical_dataframe, *categorical_dataframes]
         return self._concatenate_dataframes(dataframes)
 
-    def apply_pca(self) -> pandas.DataFrame:
+    def apply_pca(self, df: pandas.DataFrame, excluded_variables: list) -> pandas.DataFrame:
         """
         Identify non-numerical covariates and numerical covariates and apply pca.
+
+        Args:
+            df: pandas dataframe that is ready for pca.
+            excluded_variables: variables that should be excluded from pca due to observations missing at random (MAR).
+
         Returns: pandas dataframe
 
         """
+        df = df.drop(excluded_variables, axis=1)  # drop variables that will not covary much due to MAR
+        df.dropna(inplace=True)
+        z_scaler = StandardScaler()
+        z_data = z_scaler.fit_transform(df)
+        LOGGER.info(z_data)
+        pca = PCA(n_components=4)
+        pca_trafo = pca.fit(z_data)
+        LOGGER.info(dir(pca_trafo))
+        LOGGER.info(pca_trafo.explained_variance_ratio_)
+        plt.semilogy(pca_trafo.explained_variance_ratio_, '--o')
         return pandas.DataFrame([])
