@@ -194,9 +194,17 @@ class ApplyPCA(CleanData):
         return datas
 
     def yield_clean_data(self, categorical_restriction: list = None) -> pandas.DataFrame:
+        """
+
+        Args:
+            categorical_restriction: list of variable names that will not be used in generating final dataset.
+
+        Returns: pandas dataframe.
+
+        """
         LOGGER.info("Creating Categorical Covariate Matrices.")
         numerical_dataframe = self.dataset[[column for column in self.dataset.columns
-                                             if column in self.numerical_covariates]]
+                                            if column in self.numerical_covariates]]
         LOGGER.info("Numerical Covariates Dataframe:")
         LOGGER.info(numerical_dataframe)
         encoded_categoricals = self._encode_categoricals(categorical_restriction)  # dictionary of dataframes
