@@ -128,6 +128,8 @@ class ApplyPCA(CleanData):
         LOGGER.info("Instantiated PCA Application.")
         self.dataset = raw_data
         self.categorical_map = {}  # dictionary of tuples
+        self.model_covariates = None
+        self.excluded_variables = None  # subtracted from self.model_covariates in sampler.py
 
     @staticmethod
     def _categorical_encoding(vector: numpy.ndarray, _name: str) -> typing.Tuple[pandas.DataFrame, numpy.ndarray]:
@@ -190,6 +192,7 @@ class ApplyPCA(CleanData):
         datas = functools.reduce(lambda left, right: pandas.merge(left, right,
                                                                   left_index=True, right_index=True, how='outer'), dataframes)
         LOGGER.info("Final Dataset:")
+        self.model_covariates = datas.columns
         return datas
 
     @property
@@ -291,7 +294,7 @@ class ApplyPCA(CleanData):
         LOGGER.info(feature_importance)
         return feature_importance
 
-    def apply_pca(self, df: pandas.DataFrame, excluded_variables: list) -> pandas.DataFrame:
+    def apply_pca(self, df: pandas.DataFrame, excluded_variables: list) -> typing.Tuple[pandas.DataFrame, list]:
         """
         Identify non-numerical covariates and numerical covariates and apply pca.
 
@@ -303,6 +306,7 @@ class ApplyPCA(CleanData):
 
         """
         df = df.drop(excluded_variables, axis=1)  # drop variables that will not covary much due to MAR
+        self.excluded_variables = excluded_variables
         df.dropna(inplace=True)  # drop rows that contain nan across any covariates
 
         # PCA Transformation:
@@ -321,4 +325,7 @@ class ApplyPCA(CleanData):
                                                          index=['PC-1', 'PC-2', 'PC-3', 'PC-4'])
         utils.print_delimiter()
         LOGGER.info(component_feature_correlation)
-        return self.yield_most_important_variables(z_data_df, pca_model_inv)
+        # Yield model covariates:
+
+        model_variables = set(self.model_covariates) - set(self.excluded_variables)
+        return self.yield_most_important_variables(z_data_df, pca_model_inv), list(model_variables)
