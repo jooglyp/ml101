@@ -2,7 +2,7 @@
 import json
 import logging
 
-from . import log, sampler
+from . import log, sampler, utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -14,5 +14,6 @@ def main():
 
     LOGGER.info("Loading data from disk...")
 
-    with open("/tmp/data.json", "r") as fileobj:
+    with open("/tmp/data.csv", "r") as fileobj:
         dataset.load(fileobj)
+    utils.print_delimiter()
