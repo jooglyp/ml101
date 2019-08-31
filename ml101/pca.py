@@ -32,9 +32,9 @@ class CleanData:
         Returns: if value is a number, na, or nan, coerce to float64 or np.nan
 
         """
-        if value.isdigit():
-            return float(value)
-        elif value == 'na' or value == 'NA' or value == 'NAN' or value == 'nan':
+        try:
+            return numpy.float64(value)
+        except ValueError:
             return numpy.nan
 
     @staticmethod
@@ -44,7 +44,7 @@ class CleanData:
         Args:
             all_strings: vector data-type as string evaluated as True or False
 
-        Returns:'str' or 'float64'
+        Returns:'str' or 'numerical'
 
         """
         if bool(all_strings) is False:
@@ -64,8 +64,6 @@ class CleanData:
             if covariate_dtype == numpy.float64 or covariate_dtype == numpy.int64:
                 covariate_types[column] = self.dataset[column].dtype.name
             else:
-                series = self.dataset[column].apply(lambda val: self._coerce_alphanumeric(val))
-                # LOGGER.info(series)
                 all_strings = self.dataset[column].str.isnumeric().eq(False).all()
                 covariate_types[column] = self._vector_type(all_strings)
         utils.print_delimiter()
@@ -115,7 +113,7 @@ class CleanData:
         for column in list(self.dataset):
             if column in self.numerical_covariates:
                 LOGGER.info("Numerical Coercion")
-                self.dataset[column] = self.dataset[column].apply(pandas.to_numeric, errors='coerce')
+                self.dataset[column] = self.dataset[column].apply(self._coerce_alphanumeric)
             elif column in self.categorical_covariates:
                 LOGGER.info("String Coercion")
                 self.dataset[column] = self.dataset[column].astype(str)
