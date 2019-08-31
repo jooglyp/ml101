@@ -16,4 +16,6 @@ def main():
 
     with open("/tmp/data.csv", "r") as fileobj:
         dataset.load(fileobj)
+
+    dataset.fit()
     utils.print_delimiter()
