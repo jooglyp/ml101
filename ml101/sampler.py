@@ -27,3 +27,6 @@ class DataPreparer:
 
         pca_application = pca.ApplyPCA(self.raw_data)
         pca_application.coerce_data()
+        cleaned_data = pca_application.yield_clean_data(categorical_restriction=['addr_state', 'zip_code'])
+        LOGGER.info(cleaned_data)
+        LOGGER.info(cleaned_data.columns)
