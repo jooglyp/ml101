@@ -1,15 +1,11 @@
 """PCA for identifying variables with most covariance."""
 
 import logging
-import datetime
 import itertools
-import random
 import typing
-from decimal import Decimal
 import functools
 import heapq
 
-import matplotlib.pyplot as plt
 import numpy
 import pandas
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder, StandardScaler
