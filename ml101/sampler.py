@@ -89,12 +89,15 @@ class DataPreparer:
         Returns: resampled (undersampled) observations that reduce bias in the receiving operating characteristic (ROC).
 
         """
+        #TODO: unit test to ensure X and y lengths are the same
         rnn_undersampler = RepeatedEditedNearestNeighbours(random_state=82, n_neighbors=2, return_indices=True,
                                                            kind_sel='mode', max_iter=400, ratio='majority')
 
         X_resampled, y_resampled, resampled_idx = rnn_undersampler.fit_sample(copy.deepcopy(x), copy.deepcopy(y))
         LOGGER.info(X_resampled)
+        LOGGER.info("RNN undersampling yielded {} number of X_resampled observations".format(len(X_resampled)))
         LOGGER.info(y_resampled)
+        LOGGER.info("RNN undersampling yielded {} number of y_resampled observations".format(len(y_resampled)))
         return X_resampled, y_resampled
 
     @staticmethod
@@ -109,9 +112,12 @@ class DataPreparer:
         Returns: resampled (undersampled) observations that reduce bias in the receiving operating characteristic (ROC).
 
         """
+        #TODO: unit test to ensure X and y lengths are the same
         random_undersampler = RandomUnderSampler(ratio={1: 1000, 0: 100})
 
         X_resampled, y_resampled = random_undersampler.fit_sample(copy.deepcopy(x), copy.deepcopy(y))
         LOGGER.info(X_resampled)
+        LOGGER.info("Random undersampling yielded {} number of X_resampled observations".format(len(X_resampled)))
         LOGGER.info(y_resampled)
+        LOGGER.info("Random undersampling yielded {} number of y_resampled observations".format(len(X_resampled)))
         return X_resampled, y_resampled
