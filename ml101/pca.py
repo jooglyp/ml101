@@ -247,8 +247,53 @@ class ApplyPCA(CleanData):
 
     @staticmethod
     def most_important_names(importance_list: tuple, initial_feature_names: list) -> typing.Tuple[list, float]:
+        """
+
+        Args:
+            importance_list: tuple like ([1, 3, 5, 2], 10) containing indexes of covariates and variance score.
+            initial_feature_names: list like ['total_acc', 'open_acc', 'revol_bal', 'annual_inc']; feature names.
+
+        Returns: remapping to actual covariate names with their corresponding pca variances.
+
+        """
         feature_list = [initial_feature_names[importance_list[0][i]] for i in range(len(importance_list[0]))]
         return feature_list, importance_list[1]
+
+    @staticmethod
+    def rank_covariate_importance(data: list) -> list:
+        names = {}
+        for item in data:
+            for name in item[0]:
+                try:
+                    names[name] += 1
+                except KeyError:
+                    names[name] = 1
+        LOGGER.info(names)
+        return sorted(names.items(), key=lambda x: x[1], reverse=True)
+
+    def yield_most_important_variables(self, pca_data: pandas.DataFrame,
+                                       inverse_pca_model: numpy.ndarray) -> pandas.DataFrame:
+        """
+        Use PCA model to obtain top 1/3 covariates in each principal component.
+        Args:
+            pca_data:
+            inverse_pca_model:
+
+        Returns: pandas dataframe of most important variables sorted by how frequently they appear in top 4 components.
+
+        """
+        utils.print_delimiter()
+        list_top_third_variances = [self.yield_top_third_covariates_by_component(component)
+                                    for component in inverse_pca_model]
+        LOGGER.info(list_top_third_variances)
+
+        important_names = [self.most_important_names(importance_list, pca_data.columns) for
+                           importance_list in list_top_third_variances]
+        LOGGER.info(important_names)
+
+        feature_importance = pandas.DataFrame(self.rank_covariate_importance(important_names))
+        LOGGER.info(feature_importance)
+        return feature_importance
 
     def apply_pca(self, df: pandas.DataFrame, excluded_variables: list) -> pandas.DataFrame:
         """
@@ -258,7 +303,7 @@ class ApplyPCA(CleanData):
             df: pandas dataframe that is ready for pca.
             excluded_variables: variables that should be excluded from pca due to observations missing at random (MAR).
 
-        Returns: pandas dataframe
+        Returns: pandas dataframe of most important variables
 
         """
         df = df.drop(excluded_variables, axis=1)  # drop variables that will not covary much due to MAR
@@ -268,34 +313,16 @@ class ApplyPCA(CleanData):
         z_scaler = StandardScaler()
         z_data = z_scaler.fit_transform(df)
         z_data_df = pandas.DataFrame(z_data, columns=df.columns)
-        # LOGGER.info(z_data)
-        # LOGGER.info(z_data[0])
         pca = PCA(n_components=4)
         pca_model = pca.fit(z_data)
-        X_pc = pca_model.transform(z_data)
-        # LOGGER.info(X_pc)
         pca_model_inv = pca_model.inverse_transform(numpy.eye(4))
         LOGGER.info(pca_model_inv)
-
-        # PCA Obtain top 1/3 covariates in each principal component
-        utils.print_delimiter()
-        list_top_third_variances = [self.yield_top_third_covariates_by_component(component)
-                                    for component in pca_model_inv]
-        LOGGER.info(list_top_third_variances)
-
-        important_names = [self.most_important_names(importance_list, z_data_df.columns) for
-                           importance_list in list_top_third_variances]
-        LOGGER.info(important_names)
-        raise
 
         utils.print_delimiter()
         LOGGER.info("Explained Variance Ratios:")
         LOGGER.info(pca_model.explained_variance_ratio_)
-        # plt.semilogy(pca_model.explained_variance_ratio_, '--o')
-        # pca_inv_data = pca_model.inverse_transform(numpy.eye(4))
-        # LOGGER.info(pca_inv_data)
         component_feature_correlation = pandas.DataFrame(pca_model.components_, columns=z_data_df.columns,
                                                          index=['PC-1', 'PC-2', 'PC-3', 'PC-4'])
         utils.print_delimiter()
         LOGGER.info(component_feature_correlation)
-        return pandas.DataFrame([])
+        return self.yield_most_important_variables(z_data_df, pca_model_inv)
