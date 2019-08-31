@@ -27,6 +27,10 @@ class DataPreparer:
         self.model_covariates = None
         self.X = None  # Model X covariates containing no NaN values
         self.y = None  # Model y dependent variable containing no NaN values
+        self.x_random_resampled = None
+        self.y_random_resampled = None
+        self.x_rnn_resampled = None
+        self.y_rnn_resampled = None
 
     def load(self, csv) -> None:
         """Loads csv into memory as pandas dataframe and applies some transformations."""
@@ -42,6 +46,19 @@ class DataPreparer:
         self.important_covariates, self.model_covariates = pca_application.apply_pca(
             self.cleaned_data, exclude_variables)
 
+    def resampling(self):
+        self.x_random_resampled, self.y_random_resampled = self.random_undersampling(self.X, self.y)
+        utils.print_delimiter()
+        LOGGER.info(self.x_random_resampled)
+        utils.print_delimiter()
+        LOGGER.info(self.y_random_resampled)
+
+        self.x_rnn_resampled, self.y_rnn_resampled = self.rnn_undersampling(self.X, self.y)
+        utils.print_delimiter()
+        LOGGER.info(self.x_rnn_resampled)
+        utils.print_delimiter()
+        LOGGER.info(self.y_rnn_resampled)
+
     def fit(self):
         """
         Fit XGBoost model to undersampled data using K-folds cross-validation and F1-score, LogLoss optimization.
@@ -54,11 +71,7 @@ class DataPreparer:
         LOGGER.info(len(X))
         utils.print_delimiter()
         LOGGER.info(len(y))
-        x_random_resampled, y_random_resampled = self.random_undersampling(X, y)
-        utils.print_delimiter()
-        LOGGER.info(x_random_resampled)
-        utils.print_delimiter()
-        LOGGER.info(y_random_resampled)
+        self.resampling()
 
     def split_data_for_sampling(self, covariates: list) -> typing.Tuple[pandas.DataFrame, numpy.ndarray]:
         """
