@@ -245,6 +245,11 @@ class ApplyPCA(CleanData):
         LOGGER.info(target_indexes)
         return target_indexes, sum(abs_components)
 
+    @staticmethod
+    def most_important_names(importance_list: tuple, initial_feature_names: list) -> typing.Tuple[list, float]:
+        feature_list = [initial_feature_names[importance_list[0][i]] for i in range(len(importance_list[0]))]
+        return feature_list, importance_list[1]
+
     def apply_pca(self, df: pandas.DataFrame, excluded_variables: list) -> pandas.DataFrame:
         """
         Identify non-numerical covariates and numerical covariates and apply pca.
@@ -278,6 +283,9 @@ class ApplyPCA(CleanData):
                                     for component in pca_model_inv]
         LOGGER.info(list_top_third_variances)
 
+        important_names = [self.most_important_names(importance_list, z_data_df.columns) for
+                           importance_list in list_top_third_variances]
+        LOGGER.info(important_names)
         raise
 
         utils.print_delimiter()
