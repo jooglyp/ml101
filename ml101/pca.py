@@ -6,6 +6,7 @@ import itertools
 import random
 import typing
 from decimal import Decimal
+import functools
 
 import numpy
 import pandas
@@ -127,9 +128,10 @@ class ApplyPCA(CleanData):
         super().__init__(raw_data)
         LOGGER.info("Instantiated PCA Application.")
         self.dataset = raw_data
+        self.categorical_map = {}
 
     @staticmethod
-    def _categorical_encoding(vector: numpy.ndarray, _name: str) -> pandas.DataFrame:
+    def _categorical_encoding(vector: numpy.ndarray, _name: str) -> typing.Tuple[pandas.DataFrame, numpy.ndarray]:
         """
 
         Args:
@@ -150,26 +152,59 @@ class ApplyPCA(CleanData):
         categorical_matrix = pandas.DataFrame(categorical_matrix[:, 1:])
 
         encoded_matrix = pandas.DataFrame(numpy.hstack((categories, categorical_matrix)))
-        encoded_matrix.columns = [str(_name) + str("_") + str(n) for n in list(encoded_matrix.columns)]
+        encoded_matrix.columns = [str(_name) + '_' + str(n) for n in list(encoded_matrix.columns)]
 
         encoded_matrix_df = pandas.DataFrame(encoded_matrix)
         utils.print_delimiter()
         LOGGER.info(encoded_matrix_df)
-        return encoded_matrix_df
+        return encoded_matrix_df, categories
 
-    def _encode_categoricals(self) -> dict:
+    def _encode_categoricals(self, categorical_restriction: list = None) -> dict:
         """
         Creates categorical one-hot-encoded matrices for all categorical covariates
         Returns: dictionary of the form {'<categotical covariate>: pandas.DataFrame}
 
         """
         encoded_categoricals = {}
+        if categorical_restriction:
+            self.categorical_covariates = [categorical for categorical in self.categorical_covariates
+                                           if categorical not in categorical_restriction]
         for categorical_covariate in self.categorical_covariates:
-            encoded_matrix_df = self._categorical_encoding(numpy.array(self.dataset[categorical_covariate]),
-                                                           categorical_covariate)
-            encoded_categoricals['categorical_covariate'] = encoded_matrix_df
+            encoded_matrix_df, categories = self._categorical_encoding(numpy.array(self.dataset[categorical_covariate]),
+                                                                       categorical_covariate)
+            encoded_categoricals[categorical_covariate] = encoded_matrix_df
+            self.categorical_map[categorical_covariate] = [categories, encoded_matrix_df.columns]
             utils.print_delimiter()
         return encoded_categoricals
+
+    def _concatenate_dataframes(self, dataframes: list) -> pandas.DataFrame:
+        """
+        All dataframes must be of the same size.
+        Args:
+            dataframes: a list of dataframes to perform dataframe concatenation on.
+
+        Returns:
+
+        """
+        # TODO: unit test that asserts that dataframes are of the same size
+        LOGGER.info("Concatenating Dataframes")
+        datas = functools.reduce(lambda left, right: pandas.merge(left, right,
+                                                                  left_index=True, right_index=True, how='outer'), dataframes)
+        LOGGER.info("Final Dataset:")
+        return datas
+
+    def yield_clean_data(self, categorical_restriction: list = None) -> pandas.DataFrame:
+        LOGGER.info("Creating Categorical Covariate Matrices.")
+        numerical_dataframe = self.dataset[[column for column in self.dataset.columns
+                                             if column in self.numerical_covariates]]
+        LOGGER.info("Numerical Covariates Dataframe:")
+        LOGGER.info(numerical_dataframe)
+        encoded_categoricals = self._encode_categoricals(categorical_restriction)  # dictionary of dataframes
+        categorical_dataframes = list(encoded_categoricals.values())
+        LOGGER.info("List of Categorical Covariates Dataframes")
+        LOGGER.info(categorical_dataframes)
+        dataframes = [numerical_dataframe, *categorical_dataframes]
+        return self._concatenate_dataframes(dataframes)
 
     def apply_pca(self) -> pandas.DataFrame:
         """

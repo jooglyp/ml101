@@ -27,5 +27,6 @@ class DataPreparer:
 
         pca_application = pca.ApplyPCA(self.raw_data)
         pca_application.coerce_data()
-        LOGGER.info("Creating Categorical Covariate Matrices.")
-        pca_application._encode_categoricals()
+        cleaned_data = pca_application.yield_clean_data(categorical_restriction=['addr_state', 'zip_code'])
+        LOGGER.info(cleaned_data)
+        LOGGER.info(cleaned_data.columns)
