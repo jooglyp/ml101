@@ -27,3 +27,5 @@ class DataPreparer:
 
         pca_application = pca.ApplyPCA(self.raw_data)
         pca_application.coerce_data()
+        LOGGER.info("Creating Categorical Covariate Matrices.")
+        pca_application._encode_categoricals()

@@ -129,7 +129,7 @@ class ApplyPCA(CleanData):
         self.dataset = raw_data
 
     @staticmethod
-    def _categorical_encoding(vector: pandas.DataFrame) -> pandas.DataFrame:
+    def _categorical_encoding(vector: numpy.ndarray, _name: str) -> pandas.DataFrame:
         """
 
         Args:
@@ -138,24 +138,38 @@ class ApplyPCA(CleanData):
         Returns: matrix of integers that correspond to categorical variable.
 
         """
-        prefix = vector.name
-        dummy = OneHotEncoder()
+        LOGGER.info(vector)
+        dummy = OneHotEncoder(categories='auto')
         dummy_category = LabelEncoder()
         categories = numpy.zeros((vector.shape[0], 1))
         utils.print_delimiter()
         LOGGER.info(categories)
 
-        categorical_matrix = dummy_category.fit_transform(vector.reshape(-1, 1))
+        categorical_matrix = dummy_category.fit_transform(vector.reshape(-1, 1).ravel())
         categorical_matrix = dummy.fit_transform(categorical_matrix.reshape(-1, 1)).toarray()
         categorical_matrix = pandas.DataFrame(categorical_matrix[:, 1:])
 
         encoded_matrix = pandas.DataFrame(numpy.hstack((categories, categorical_matrix)))
-        encoded_matrix.columns = [str(prefix) + str("_") + str(n) for n in list(encoded_matrix.columns)]
+        encoded_matrix.columns = [str(_name) + str("_") + str(n) for n in list(encoded_matrix.columns)]
 
         encoded_matrix_df = pandas.DataFrame(encoded_matrix)
         utils.print_delimiter()
         LOGGER.info(encoded_matrix_df)
         return encoded_matrix_df
+
+    def _encode_categoricals(self) -> dict:
+        """
+        Creates categorical one-hot-encoded matrices for all categorical covariates
+        Returns: dictionary of the form {'<categotical covariate>: pandas.DataFrame}
+
+        """
+        encoded_categoricals = {}
+        for categorical_covariate in self.categorical_covariates:
+            encoded_matrix_df = self._categorical_encoding(numpy.array(self.dataset[categorical_covariate]),
+                                                           categorical_covariate)
+            encoded_categoricals['categorical_covariate'] = encoded_matrix_df
+            utils.print_delimiter()
+        return encoded_categoricals
 
     def apply_pca(self) -> pandas.DataFrame:
         """
