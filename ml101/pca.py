@@ -225,7 +225,8 @@ class ApplyPCA(CleanData):
         dataframes = [numerical_dataframe, *categorical_dataframes]
         return self._concatenate_dataframes(dataframes)
 
-    def apply_pca(self, df: pandas.DataFrame, excluded_variables: list) -> pandas.DataFrame:
+    @staticmethod
+    def apply_pca(df: pandas.DataFrame, excluded_variables: list) -> pandas.DataFrame:
         """
         Identify non-numerical covariates and numerical covariates and apply pca.
 
@@ -237,10 +238,10 @@ class ApplyPCA(CleanData):
 
         """
         df = df.drop(excluded_variables, axis=1)  # drop variables that will not covary much due to MAR
-        df.dropna(inplace=True)
+        df.dropna(inplace=True)  # drop rows that contain nan across any covariates
+
         z_scaler = StandardScaler()
         z_data = z_scaler.fit_transform(df)
-        LOGGER.info(z_data)
         pca = PCA(n_components=4)
         pca_trafo = pca.fit(z_data)
         LOGGER.info(dir(pca_trafo))
