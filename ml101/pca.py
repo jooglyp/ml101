@@ -1,14 +1,11 @@
 """PCA for identifying variables with most covariance."""
 
 import logging
-import datetime
 import itertools
-import random
 import typing
-from decimal import Decimal
 import functools
+import heapq
 
-import matplotlib.pyplot as plt
 import numpy
 import pandas
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder, StandardScaler
@@ -225,6 +222,75 @@ class ApplyPCA(CleanData):
         dataframes = [numerical_dataframe, *categorical_dataframes]
         return self._concatenate_dataframes(dataframes)
 
+    @staticmethod
+    def yield_top_third_covariates_by_component(component: numpy.ndarray) -> typing.Tuple[list, float]:
+        """
+
+        Args:
+            component: numpy array corresponding to a principal component containing k feature variances
+
+        Returns: list containing indexes of top 1/3 features according to explained variances.
+
+        """
+        target_number_indexes = (component.size // 3)
+
+        abs_components = numpy.array([abs(covariate) for covariate in component])
+
+        target_indexes = heapq.nlargest(target_number_indexes, range(len(abs_components)),
+                                        key=abs_components.__getitem__)
+        LOGGER.info(target_indexes)
+        return target_indexes, sum(abs_components)
+
+    @staticmethod
+    def most_important_names(importance_list: tuple, initial_feature_names: list) -> typing.Tuple[list, float]:
+        """
+
+        Args:
+            importance_list: tuple like ([1, 3, 5, 2], 10) containing indexes of covariates and variance score.
+            initial_feature_names: list like ['total_acc', 'open_acc', 'revol_bal', 'annual_inc']; feature names.
+
+        Returns: remapping to actual covariate names with their corresponding pca variances.
+
+        """
+        feature_list = [initial_feature_names[importance_list[0][i]] for i in range(len(importance_list[0]))]
+        return feature_list, importance_list[1]
+
+    @staticmethod
+    def rank_covariate_importance(data: list) -> list:
+        names = {}
+        for item in data:
+            for name in item[0]:
+                try:
+                    names[name] += 1
+                except KeyError:
+                    names[name] = 1
+        LOGGER.info(names)
+        return sorted(names.items(), key=lambda x: x[1], reverse=True)
+
+    def yield_most_important_variables(self, pca_data: pandas.DataFrame,
+                                       inverse_pca_model: numpy.ndarray) -> pandas.DataFrame:
+        """
+        Use PCA model to obtain top 1/3 covariates in each principal component.
+        Args:
+            pca_data:
+            inverse_pca_model:
+
+        Returns: pandas dataframe of most important variables sorted by how frequently they appear in top 4 components.
+
+        """
+        utils.print_delimiter()
+        list_top_third_variances = [self.yield_top_third_covariates_by_component(component)
+                                    for component in inverse_pca_model]
+        LOGGER.info(list_top_third_variances)
+
+        important_names = [self.most_important_names(importance_list, pca_data.columns) for
+                           importance_list in list_top_third_variances]
+        LOGGER.info(important_names)
+
+        feature_importance = pandas.DataFrame(self.rank_covariate_importance(important_names))
+        LOGGER.info(feature_importance)
+        return feature_importance
+
     def apply_pca(self, df: pandas.DataFrame, excluded_variables: list) -> pandas.DataFrame:
         """
         Identify non-numerical covariates and numerical covariates and apply pca.
@@ -233,17 +299,26 @@ class ApplyPCA(CleanData):
             df: pandas dataframe that is ready for pca.
             excluded_variables: variables that should be excluded from pca due to observations missing at random (MAR).
 
-        Returns: pandas dataframe
+        Returns: pandas dataframe of most important variables
 
         """
         df = df.drop(excluded_variables, axis=1)  # drop variables that will not covary much due to MAR
-        df.dropna(inplace=True)
+        df.dropna(inplace=True)  # drop rows that contain nan across any covariates
+
+        # PCA Transformation:
         z_scaler = StandardScaler()
         z_data = z_scaler.fit_transform(df)
-        LOGGER.info(z_data)
+        z_data_df = pandas.DataFrame(z_data, columns=df.columns)
         pca = PCA(n_components=4)
-        pca_trafo = pca.fit(z_data)
-        LOGGER.info(dir(pca_trafo))
-        LOGGER.info(pca_trafo.explained_variance_ratio_)
-        plt.semilogy(pca_trafo.explained_variance_ratio_, '--o')
-        return pandas.DataFrame([])
+        pca_model = pca.fit(z_data)
+        pca_model_inv = pca_model.inverse_transform(numpy.eye(4))
+        LOGGER.info(pca_model_inv)
+
+        utils.print_delimiter()
+        LOGGER.info("Explained Variance Ratios:")
+        LOGGER.info(pca_model.explained_variance_ratio_)
+        component_feature_correlation = pandas.DataFrame(pca_model.components_, columns=z_data_df.columns,
+                                                         index=['PC-1', 'PC-2', 'PC-3', 'PC-4'])
+        utils.print_delimiter()
+        LOGGER.info(component_feature_correlation)
+        return self.yield_most_important_variables(z_data_df, pca_model_inv)
