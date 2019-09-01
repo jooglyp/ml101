@@ -5,6 +5,7 @@ import logging
 import pandas
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.externals import joblib
+from sklearn.metrics import auc, accuracy_score, confusion_matrix, mean_squared_error
 from dask.distributed import Client
 import dask
 import dask.dataframe as dd
@@ -44,5 +45,7 @@ class CrossValidation:
                 X_train, X_test, y_train, y_test = self.X[train_index], self.X[test_index], \
                                                    self.y[train_index], self.y[test_index]
                 xgb_est.fit(X_train, y_train)
-                scores.append(xgb_est.score(X_test, y_test))
-            LOGGER.info(scores)
+                y_pred = xgb_est.predict(X_test)
+                # scores.append(xgb_est.score(X_test, y_test))
+                scores.append(mean_squared_error(y_test, y_pred))
+            LOGGER.info(numpy.sqrt(scores))
