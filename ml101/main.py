@@ -21,6 +21,7 @@ def main():
     xgboost_model.assignment_fit()
 
     # Client-Side Simulation:
-    # xgboost_model.fit(X_Pandas, y_ndarray, grid_search=None)
+    # client_xgboost_model = model.ExecuteML101Model()
+    # client_xgboost_model.fit(X_Pandas, y_ndarray, grid_search=None)
 
     utils.print_delimiter()
