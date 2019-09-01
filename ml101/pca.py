@@ -130,6 +130,7 @@ class ApplyPCA(CleanData):
         self.categorical_map = {}  # dictionary of tuples
         self.model_covariates = None
         self.excluded_variables = None  # subtracted from self.model_covariates in sampler.py
+        self.clientside_covariate_exclusion = []  # list of variables to exclude in clientside run with autorestriction.
 
     @staticmethod
     def _categorical_encoding(vector: numpy.ndarray, _name: str) -> typing.Tuple[pandas.DataFrame, numpy.ndarray]:
@@ -160,7 +161,7 @@ class ApplyPCA(CleanData):
         LOGGER.info(encoded_matrix_df)
         return encoded_matrix_df, categories
 
-    def _encode_categoricals(self, categorical_restriction: list = None) -> dict:
+    def _encode_categoricals(self, categorical_restriction: list = None, autorestriction=False) -> dict:
         """
         Creates categorical one-hot-encoded matrices for all categorical covariates
         Returns: dictionary of the form {'<categotical covariate>: pandas.DataFrame}
@@ -174,7 +175,12 @@ class ApplyPCA(CleanData):
             encoded_matrix_df, categories = self._categorical_encoding(numpy.array(self.dataset[categorical_covariate]),
                                                                        categorical_covariate)
             encoded_categoricals[categorical_covariate] = encoded_matrix_df
-            self.categorical_map[categorical_covariate] = (categories, encoded_matrix_df.columns)
+            if autorestriction:
+                if len(categories) > 10:  # if encoding yields more than 10 binary covariates, skip covariate.
+                    self.clientside_covariate_exclusion.append(categorical_covariate)
+                    continue
+                else:
+                    self.categorical_map[categorical_covariate] = (categories, encoded_matrix_df.columns)
             utils.print_delimiter()
         return encoded_categoricals
 
@@ -204,7 +210,7 @@ class ApplyPCA(CleanData):
         flattened_list = list(itertools.chain(*covariates))
         return flattened_list
 
-    def yield_clean_data(self, categorical_restriction: list = None) -> pandas.DataFrame:
+    def yield_clean_data(self, categorical_restriction: list = None, autorestrictions=False) -> pandas.DataFrame:
         """
 
         Args:
@@ -218,7 +224,8 @@ class ApplyPCA(CleanData):
                                             if column in self.numerical_covariates]]
         LOGGER.info("Numerical Covariates Dataframe:")
         LOGGER.info(numerical_dataframe)
-        encoded_categoricals = self._encode_categoricals(categorical_restriction)  # dictionary of dataframes
+        # dictionary of dataframes:
+        encoded_categoricals = self._encode_categoricals(categorical_restriction, autorestrictions)
         categorical_dataframes = list(encoded_categoricals.values())
         LOGGER.info("List of Categorical Covariates Dataframes")
         LOGGER.info(categorical_dataframes)
@@ -294,18 +301,22 @@ class ApplyPCA(CleanData):
         LOGGER.info(feature_importance)
         return feature_importance
 
-    def apply_pca(self, df: pandas.DataFrame, excluded_variables: list) -> typing.Tuple[pandas.DataFrame, list]:
+    def apply_pca(self, df: pandas.DataFrame, excluded_variables: list, assignment=False) -> \
+            typing.Tuple[pandas.DataFrame, list]:
         """
         Identify non-numerical covariates and numerical covariates and apply pca.
 
         Args:
-            df: pandas dataframe that is ready for pca.
+            df: pandas dataframe that is ready for pca (if assignment=True, X and y are considered concatenated).
             excluded_variables: variables that should be excluded from pca due to observations missing at random (MAR).
+            assignment: if True, do not assume dataframe contains X and y together.
 
         Returns: pandas dataframe of most important variables
 
         """
         df = df.drop(excluded_variables, axis=1)  # drop variables that will not covary much due to MAR
+        if assignment:
+            df = df.drop(['is_bad'], axis=1)
         self.excluded_variables = excluded_variables
         df.dropna(inplace=True)  # drop rows that contain nan across any covariates
 
@@ -328,4 +339,5 @@ class ApplyPCA(CleanData):
         # Yield model covariates:
 
         model_variables = set(self.model_covariates) - set(self.excluded_variables)
+        # TODO: utilize weak pca variances later on in fitting.
         return self.yield_most_important_variables(z_data_df, pca_model_inv), list(model_variables)

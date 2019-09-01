@@ -10,16 +10,17 @@ LOGGER = logging.getLogger(__name__)
 def main():
     log.init()
 
+    # Assignment Simulation:
     dataset = sampler.DataPreparer()
-
     LOGGER.info("Loading data from disk...")
-
     with open("/tmp/data.csv", "r") as fileobj:
-        dataset.load(fileobj)
+        dataset.assignment_pca(fileobj)
+    dataset.sample(assignment=True)
+    xgboost_model = model.ML101Model(dataset.x_rnn_resampled, dataset.y_rnn_resampled,
+                                     dataset.X.columns, 'is_bad')
+    xgboost_model.assignment_fit()
 
-    dataset.fit()
+    # Client-Side Simulation:
+    # xgboost_model.fit(X_Pandas, y_ndarray, grid_search=None)
 
-    crossvalidator = model.CrossValidation(dataset.x_rnn_resampled, dataset.y_rnn_resampled,
-                                           dataset.X.columns, 'is_bad')
-    crossvalidator.kfold_cv()
     utils.print_delimiter()
