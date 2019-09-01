@@ -5,19 +5,26 @@ import logging
 import pandas
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.externals import joblib
+from dask.distributed import Client
 import dask
 import dask.dataframe as dd
+import dask.array as da
 from dask_ml.xgboost import XGBRegressor
 from dask_ml.model_selection import KFold
 import numpy
 
 LOGGER = logging.getLogger(__name__)
+CLIENT = dask.distributed.Client()
 
 
 class CrossValidation:
-    def __init__(self, X: pandas.DataFrame, y: numpy.ndarray):
-        self.X = self.dask_transform(X)
-        self.y = self.dask_transform(pandas.DataFrame(y))
+    def __init__(self, X: numpy.ndarray, y: numpy.ndarray, xlabels: list, ylabel: str):
+        self.X = da.from_array(X, chunks=X.shape)
+        self.y = da.from_array(y, chunks=y.shape)
+        self.xlabels = xlabels
+        self.ylabel = ylabel
+        LOGGER.info(self.X)
+        LOGGER.info(self.y)
 
     def scale_data(self):
         scaler = MinMaxScaler(feature_range=(0, 1))
