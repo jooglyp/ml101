@@ -2,7 +2,7 @@
 import json
 import logging
 
-from . import log, sampler, utils, crossvalidate
+from . import log, sampler, utils, model
 
 LOGGER = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ def main():
 
     dataset.fit()
 
-    crossvalidator = crossvalidate.CrossValidation(dataset.x_rnn_resampled, dataset.y_rnn_resampled,
-                                                   dataset.X.columns, 'is_bad')
+    crossvalidator = model.CrossValidation(dataset.x_rnn_resampled, dataset.y_rnn_resampled,
+                                           dataset.X.columns, 'is_bad')
     crossvalidator.kfold_cv()
     utils.print_delimiter()

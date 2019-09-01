@@ -1,4 +1,4 @@
-"""K-Fold crossvalidator"""
+"""Model: Extreme Gradient Boosting Regressor wrapped in a K-Fold crossvalidator."""
 
 import logging
 
@@ -24,6 +24,7 @@ class CrossValidation:
         self.y = da.from_array(y, chunks=y.shape)
         self.xlabels = xlabels
         self.ylabel = ylabel
+
         LOGGER.info(self.X)
         LOGGER.info(self.y)
 
