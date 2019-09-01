@@ -5,7 +5,8 @@ import logging
 import pandas
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.externals import joblib
-from sklearn.metrics import auc, accuracy_score, confusion_matrix, mean_squared_error
+from sklearn.metrics import auc, accuracy_score, confusion_matrix, mean_squared_error, f1_score, precision_score
+from sklearn.metrics import recall_score, average_precision_score
 from dask.distributed import Client
 import dask
 import dask.dataframe as dd
@@ -24,7 +25,8 @@ class CrossValidation:
         self.y = da.from_array(y, chunks=y.shape)
         self.xlabels = xlabels
         self.ylabel = ylabel
-
+        self.ytest_iterations = None  # list to store kfold crossvalidation results
+        self.ypred_iterations = None  # list to store kfold crossvalidation results
         LOGGER.info(self.X)
         LOGGER.info(self.y)
 
@@ -47,6 +49,24 @@ class CrossValidation:
                                                    self.y[train_index], self.y[test_index]
                 xgb_est.fit(X_train, y_train)
                 y_pred = xgb_est.predict(X_test)
+                self.ypred_iterations.append(y_pred)
+                self.ytest_iterations.append(y_test)
                 # scores.append(xgb_est.score(X_test, y_test))
                 scores.append(mean_squared_error(y_test, y_pred))
+            optimizer = ParameterOptimizer(self.ytest_iterations, self.ypred_iterations)
             LOGGER.info(numpy.sqrt(scores))
+
+
+class Evaluators:
+    """Evaluates model accuracy using a confusion matrix, precision/recall (f-1 score), and log-loss."""
+    def __init__(self, ytest_iterations: list, ypred_iterations: list):
+        self.ytest_iterations = ytest_iterations
+        self.ypred_iterations = ypred_iterations
+
+
+class ParameterOptimizer(Evaluators):
+    """Evaluates model kfold crossvalidations to obtain optimized model parameters for best fit."""
+    def __init__(self, ytest_iterations: list, ypred_iterations: list):
+        super().__init__(ytest_iterations, ypred_iterations)
+        self.ytest_iterations = ytest_iterations
+        self.ypred_iterations = ypred_iterations
