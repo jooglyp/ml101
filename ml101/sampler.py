@@ -46,7 +46,6 @@ class DataPreparer:
         self.important_covariates, self.model_covariates = pca_application.apply_pca(
             self.cleaned_data,
             pca_application.clientside_covariate_exclusion,
-            assignment=False,
         )
 
     def assignment_pca(self, csv, category_limit: int) -> None:
@@ -66,7 +65,7 @@ class DataPreparer:
             *pca_application.yield_categorical_variables,
         ]
         self.important_covariates, self.model_covariates = pca_application.apply_pca(
-            self.cleaned_data, exclude_variables, assignment=True
+            self.cleaned_data, exclude_variables
         )  # cleaned_data contains X and y here.
 
     def secondary_pca(
@@ -182,7 +181,6 @@ class DataPreparer:
         sample_proportion=0.9,
         pca_proportion=0.95,
         pca_components=4,
-        assignment=False,
     ):
         """
         self.model_covariates are always a list of the X's.
@@ -194,25 +192,18 @@ class DataPreparer:
             neighbors: neighbors to use in rnn undersampling.
             sample_proportion: sample proportion to use in random undersampling.
             pca_proportion: subset of top 2/3 pca variables to use in a second subsetting of pca variables.
-            assignment: is assignment or clientside sampling operation.
 
         Returns: Returns: Resampled dataset ready for model fitting.
 
         """
         # TODO: unit test to ensure X and y data are the same length
-        if assignment:
-            X, y = self.split_data_for_sampling(covariates=self.model_covariates)
-            LOGGER.info(len(X))
-            LOGGER.info(len(y))
-            self.resampling(neighbors, sample_proportion, pca_components)
-        else:
-            self.model_covariates = self.randomize_top_covariates(
-                pca_importance, model_covariates, pca_proportion
-            )
-            X, y = self.prepare_data_for_sampling(self.model_covariates, y)
-            LOGGER.info(len(X))
-            LOGGER.info(len(y))
-            self.resampling(neighbors, sample_proportion, pca_components)
+        self.model_covariates = self.randomize_top_covariates(
+            pca_importance, model_covariates, pca_proportion
+        )
+        X, y = self.prepare_data_for_sampling(self.model_covariates, y)
+        LOGGER.info(len(X))
+        LOGGER.info(len(y))
+        self.resampling(neighbors, sample_proportion, pca_components)
 
     def split_data_for_sampling(
         self, covariates: list

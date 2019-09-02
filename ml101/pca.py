@@ -143,7 +143,7 @@ class ApplyPCA(CleanData):
     @staticmethod
     def _categorical_encoding(
         vector: numpy.ndarray, _name: str
-    ) -> typing.Tuple[pandas.DataFrame, numpy.ndarray]:
+    ) -> typing.Tuple[pandas.DataFrame, list]:
         """
 
         Args:
@@ -173,7 +173,7 @@ class ApplyPCA(CleanData):
 
         encoded_matrix_df = pandas.DataFrame(encoded_matrix)
         LOGGER.info(encoded_matrix_df)
-        return encoded_matrix_df, categories
+        return encoded_matrix_df, list(encoded_matrix.columns)
 
     def _encode_categoricals(
         self,
@@ -202,6 +202,11 @@ class ApplyPCA(CleanData):
                 if (
                     len(categories) > category_limit
                 ):  # skip covariate if more than limit param
+                    LOGGER.info(categorical_covariate)
+                    LOGGER.info(len(categories))
+                    LOGGER.info(category_limit)
+                    LOGGER.info(type(len(categories)))
+                    LOGGER.info(type(category_limit))
                     self.clientside_covariate_exclusion.append(categorical_covariate)
                 self.categorical_map[categorical_covariate] = (
                     categories,
@@ -367,6 +372,7 @@ class ApplyPCA(CleanData):
             df: pandas dataframe of X's that contains categorical encoded variables of the form ['X_1', 'X_2']
             excluded_variables: list of variables to exclude of the form ['X', 'Z']
         """
+        LOGGER.info(excluded_variables)
         excluded = []
         LOGGER.info(df)
         for column in df.columns:
@@ -429,54 +435,42 @@ class ApplyPCA(CleanData):
             return df
 
     def _coerce_full_dataframe(
-        self, df: pandas.DataFrame, excluded_variables: list, assignment=False
+        self, df: pandas.DataFrame, excluded_variables: list
     ):
         """
         Helper function for apply_pca()
         Args:
-            df: pandas dataframe that is ready for pca (if assignment=True, X and y are considered concatenated).
+            df: pandas dataframe that is ready for pca.
             excluded_variables: if autorestriction, these are categoricals of form ['X', 'Z']. Otherwise preset.
-            assignment: if True, do not assume dataframe contains X and y together.
 
         Returns: dataframe with mar adjustments and all categories exceeding dimensional limits.
 
         """
-        if assignment:
-            df = df.drop(["is_bad"], axis=1)
-            df = df.drop(
-                excluded_variables, axis=1
-            )  # drop variables that will not covary much due to MAR
-            df = self.check_id(df)
-            self.excluded_variables = excluded_variables
-            LOGGER.info(self.excluded_variables)
-        else:
-            df = self.smartdrop(df, excluded_variables)
-            LOGGER.info(df.columns)
-            df = self.correct_for_mar(
-                df, 0.5
-            )  # drop variables that will not covary much due to MAR
-            df = self.check_id(df)
-            LOGGER.info(df.columns)
-            # LOGGER.info(self.excluded_variables)
+        df = self.smartdrop(df, excluded_variables)
+        df = self.correct_for_mar(
+            df, 0.5
+        )  # drop variables that will not covary much due to MAR
+        df = self.check_id(df)
+        LOGGER.info(df.columns)
+        # LOGGER.info(self.excluded_variables)
         LOGGER.info(df.columns)
         df.dropna(inplace=True)  # drop rows that contain nan across any covariates
         return df
 
     def apply_pca(
-        self, df: pandas.DataFrame, excluded_variables: list, assignment=False
+        self, df: pandas.DataFrame, excluded_variables: list,
     ) -> typing.Tuple[pandas.DataFrame, list]:
         """
         Identify non-numerical covariates and numerical covariates and apply pca.
 
         Args:
-            df: pandas dataframe that is ready for pca (if assignment=True, X and y are considered concatenated).
+            df: pandas dataframe that is ready for pca.
             excluded_variables: if autorestriction, these are categoricals of form ['X', 'Z']. Otherwise preset.
-            assignment: if True, do not assume dataframe contains X and y together.
 
         Returns: pandas dataframe of most important variables
 
         """
-        df = self._coerce_full_dataframe(df, excluded_variables, assignment=False)
+        df = self._coerce_full_dataframe(df, excluded_variables)
         # PCA Transformation:
         z_scaler = StandardScaler()
         z_data = z_scaler.fit_transform(df)
