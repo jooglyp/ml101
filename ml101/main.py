@@ -26,13 +26,20 @@ def main():
         raw_data = pandas.read_csv(fileobj)
         X = raw_data[raw_data.columns.difference(['is_bad'])]
         y = numpy.array(raw_data[['is_bad']])
+
+    xgboost_model = model.XGBoostModel()
+
+    xgboost_model.evaluate(X, y)
+
+    '''
         dataset.clientside_pca(X, category_limit=50)
     dataset.sample(y=y, neighbors=2, sample_proportion=0.3, pca_components=4)
 
     #---#
     LOGGER.info(dataset.x_rnn_resampled)
     LOGGER.info(dataset.y_rnn_resampled)
-    xgboost_model = model.ML101Model(dataset.x_rnn_resampled, dataset.y_rnn_resampled,
+
+    xgboost_model = model.XGBoostModel(dataset.x_rnn_resampled, dataset.y_rnn_resampled,
                                      dataset.X.columns, 'is_bad', dataset.important_covariates,
                                      dataset.model_covariates, X, y)
     xgboost_model.assignment_fit()
@@ -43,3 +50,4 @@ def main():
     # client_xgboost_model.fit(X_Pandas, y_ndarray, grid_search=None)
 
     utils.print_delimiter()
+    '''
