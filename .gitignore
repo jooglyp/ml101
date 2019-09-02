@@ -1,6 +1,7 @@
 .idea
 .pyenv
 .coverage
+.coverage*
 .mypy_cache
 .tox
 htmlcov
