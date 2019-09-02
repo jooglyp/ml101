@@ -1,0 +1,201 @@
+Id,is_bad,emp_length,home_ownership,annual_inc,verification_status,pymnt_plan,purpose_cat,zip_code,addr_state,debt_to_income,delinq_2yrs,inq_last_6mths,mths_since_last_delinq,mths_since_last_record,open_acc,pub_rec,revol_bal,revol_util,total_acc,initial_list_status,collections_12_mths_ex_med,mths_since_last_major_derog,policy_code
+1,0,10,MORTGAGE,50000,not verified,n,medical,766xx,TX,10.87,0,0,NA,NA,15,0,12087,12.1,44,f,0,1,PC4
+2,0,1,RENT,39216,not verified,n,debt consolidation,660xx,KS,9.15,0,2,NA,NA,4,0,10114,64,5,f,0,2,PC1
+3,0,4,RENT,65000,not verified,n,credit card,916xx,CA,11.24,0,0,NA,NA,4,0,81,0.6,8,f,0,3,PC4
+4,0,10,MORTGAGE,57500,not verified,n,debt consolidation,124xx,NY,6.18,1,0,16,NA,6,0,10030,37.1,23,f,0,2,PC2
+5,0,10,MORTGAGE,50004,VERIFIED - income,n,debt consolidation,439xx,OH,19.03,0,4,NA,NA,8,0,10740,40.4,21,f,0,3,PC3
+6,0,4,RENT,47028,VERIFIED - income,n,other,200xx,DC,7.83,2,1,19,NA,6,0,1715,26.4,25,f,0,3,PC3
+7,0,10,MORTGAGE,126000,not verified,n,credit card,103xx,NY,14.28,0,0,NA,NA,18,0,5466,11.1,29,f,0,3,PC1
+8,0,6,MORTGAGE,42000,VERIFIED - income source,n,debt consolidation,891xx,NV,10.29,0,0,NA,NA,9,0,10354,95.9,10,f,0,3,PC3
+9,0,2,MORTGAGE,50000,VERIFIED - income,n,debt consolidation,612xx,IL,15.36,0,2,NA,NA,11,0,19662,59.2,27,f,0,1,PC5
+10,0,1,RENT,40000,not verified,n,car,926xx,CA,6.48,0,1,NA,NA,11,0,19998,18.3,23,f,0,1,PC5
+11,0,3,RENT,74000,VERIFIED - income source,n,credit card,921xx,CA,17.11,0,0,NA,NA,10,0,15046,39.9,18,f,0,1,PC4
+12,0,5,RENT,112000,not verified,n,debt consolidation,200xx,DC,14.96,0,0,NA,NA,12,0,25274,39.5,24,f,0,1,PC3
+13,0,1,RENT,148080,VERIFIED - income,n,debt consolidation,980xx,WA,15.88,0,2,NA,NA,12,0,36546,73.4,27,f,0,1,PC3
+14,0,10,RENT,44724,not verified,n,wedding,198xx,DE,17.41,0,3,NA,NA,3,0,886,25.3,5,f,0,2,PC1
+15,0,1,RENT,100000,not verified,n,other,920xx,CA,18.66,0,0,NA,NA,13,0,23484,70.1,37,f,0,3,PC3
+16,0,10,MORTGAGE,75000,VERIFIED - income,n,debt consolidation,604xx,IL,13.42,0,0,NA,NA,5,0,18591,37.9,19,m,0,3,PC3
+17,1,10,OWN,22000,VERIFIED - income source,n,other small business,324xx,FL,14.95,0,0,NA,NA,4,0,8511,78.8,9,m,0,3,PC2
+18,0,1,RENT,30000,VERIFIED - income source,n,debt consolidation,076xx,NJ,19.32,0,0,NA,NA,9,0,5276,62.1,19,f,0,3,PC4
+19,0,3,RENT,63000,VERIFIED - income,n,debt consolidation,925xx,CA,19.09,0,1,NA,NA,12,0,16167,70.3,27,f,0,2,PC2
+20,0,3,MORTGAGE,120000,VERIFIED - income source,n,house,606xx,IL,5.22,1,3,13,NA,5,0,49805,0,36,f,0,1,PC1
+21,1,2,MORTGAGE,72000,not verified,n,small business,741xx,OK,17.48,0,6,NA,NA,13,0,1249,6.1,23,f,0,3,PC3
+22,0,1,RENT,350000,VERIFIED - income,n,credit card,234xx,VA,12.22,0,0,34,NA,8,0,27733,80.4,24,f,0,3,PC4
+23,0,10,RENT,56000,VERIFIED - income,n,debt consolidation,908xx,CA,15.43,0,0,NA,NA,6,0,4971,43.5,19,f,0,1,PC2
+24,0,1,MORTGAGE,191000,not verified,n,educational,324xx,FL,12.2,0,0,49,NA,16,0,444,2.5,54,f,0,2,PC1
+25,0,10,RENT,47480,not verified,n,other,038xx,NH,16.81,0,3,32,NA,10,0,150,3.1,24,f,0,3,PC1
+26,0,8,MORTGAGE,33600,VERIFIED - income,n,major purchase,236xx,VA,3.93,0,1,67,NA,5,0,8482,73.8,20,f,0,2,PC1
+27,0,2,MORTGAGE,42000,not verified,n,other,142xx,NY,15.89,0,1,NA,NA,10,0,20691,51.6,20,f,0,2,PC5
+28,0,5,MORTGAGE,40000,not verified,n,debt consolidation,010xx,MA,10.71,0,0,NA,NA,11,0,2459,44.7,26,f,0,2,PC2
+29,0,3,MORTGAGE,55000,not verified,n,credit card,614xx,IL,24.94,0,8,NA,NA,16,0,41705,95.2,24,f,0,3,PC2
+30,0,4,RENT,120000,not verified,n,other,918xx,CA,0,0,0,48,NA,2,0,0,0,7,f,0,3,PC2
+31,0,1,MORTGAGE,100000,VERIFIED - income,n,debt consolidation,200xx,DC,19.99,0,1,58,NA,6,0,24678,79,22,f,0,2,PC5
+32,0,3,MORTGAGE,48000,VERIFIED - income,n,debt consolidation,287xx,NC,22.59,0,2,52,NA,10,0,2894,36.2,13,f,0,2,PC3
+33,0,5,RENT,41000,not verified,n,debt consolidation,972xx,OR,20.69,0,0,39,NA,6,0,10949,61.9,12,f,0,3,PC4
+34,0,1,RENT,8000,VERIFIED - income source,n,car,304xx,GA,15.15,0,0,NA,NA,6,0,2146,20.2,16,f,0,1,PC1
+35,0,10,MORTGAGE,80000,VERIFIED - income,n,debt consolidation,660xx,KS,8.14,0,0,NA,NA,10,0,14563,68.1,23,f,0,2,PC4
+36,0,2,RENT,95000,VERIFIED - income,n,credit card,232xx,VA,13.65,0,0,NA,NA,8,0,27686,54.3,26,f,0,1,PC3
+37,0,4,RENT,60000,VERIFIED - income,n,debt consolidation,802xx,CO,9.46,0,0,60,NA,14,0,9936,16.7,29,f,0,2,PC5
+38,0,2,RENT,42000,not verified,n,debt consolidation,918xx,CA,12.74,0,3,62,NA,11,0,528,9.1,22,f,0,3,PC4
+39,0,3,OWN,36400,not verified,n,debt consolidation,606xx,IL,10.98,0,1,NA,NA,8,0,6772,72.8,18,f,0,3,PC4
+40,0,1,RENT,65400,VERIFIED - income source,n,credit card,932xx,CA,17.71,0,3,NA,NA,8,0,13041,81.5,36,f,0,3,PC5
+41,0,2,RENT,58000,not verified,n,debt consolidation,070xx,NJ,13.55,0,3,64,NA,7,0,7616,58.1,16,f,0,3,PC5
+42,0,4,RENT,315600,VERIFIED - income source,n,debt consolidation,088xx,NJ,0.98,0,2,NA,NA,6,0,1555,24.7,10,f,0,1,PC3
+43,0,2,MORTGAGE,45000,not verified,n,home improvement,210xx,MD,7.79,0,1,NA,NA,9,0,780,4.1,19,f,0,2,PC3
+44,0,5,RENT,55000,not verified,n,debt consolidation,060xx,CT,22.28,0,2,NA,NA,13,0,14217,20.2,25,f,0,2,PC5
+45,0,4,MORTGAGE,141000,VERIFIED - income,n,major purchase,633xx,MO,8.31,0,3,NA,NA,10,0,55142,45.8,24,f,0,1,PC1
+46,0,7,MORTGAGE,72000,not verified,n,car,978xx,OR,8.68,0,0,NA,NA,10,0,18885,66.3,43,f,0,2,PC5
+47,0,1,MORTGAGE,35000,VERIFIED - income source,n,debt consolidation,535xx,WI,14.5,0,3,NA,NA,12,0,17717,67.4,26,f,0,1,PC4
+48,0,3,MORTGAGE,42240,not verified,n,debt consolidation,335xx,FL,13.35,1,1,4,NA,5,0,15974,48.9,16,f,0,1,PC3
+49,0,10,MORTGAGE,66000,not verified,n,home improvement,857xx,AZ,12.58,0,1,NA,NA,11,0,5723,8.4,38,f,0,3,PC4
+50,0,6,RENT,86496,VERIFIED - income source,n,debt consolidation,115xx,NY,14.19,0,0,NA,NA,6,0,12915,85,12,f,0,1,PC2
+51,0,10,RENT,52656,VERIFIED - income,n,medical,104xx,NY,7.7,0,0,34,NA,16,0,0,0,24,f,0,3,PC5
+52,1,1,MORTGAGE,120000,VERIFIED - income source,n,other,207xx,MD,21.16,4,1,4,NA,25,0,43109,72.3,49,f,0,3,PC5
+53,0,1,RENT,30000,not verified,n,educational,272xx,SC,8.36,0,2,NA,NA,14,0,277,46.2,15,f,0,2,PC3
+54,0,10,MORTGAGE,120000,not verified,n,major purchase,913xx,CA,6.98,0,0,NA,NA,15,0,78330,28.6,31,f,0,2,PC4
+55,1,1,RENT,23040,VERIFIED - income source,n,credit card,951xx,CA,12.66,0,0,63,NA,6,0,8282,62.3,11,f,0,2,PC3
+56,1,1,RENT,15000,VERIFIED - income,n,other,774xx,TX,18.08,0,0,NA,NA,2,0,9279,36.5,3,f,0,1,PC4
+57,0,3,OWN,43000,VERIFIED - income,n,debt consolidation,221xx,VA,15.49,1,1,19,NA,9,0,19226,70.9,32,f,0,2,PC4
+58,0,10,MORTGAGE,99600,VERIFIED - income,n,medical,954xx,CA,15.22,0,0,NA,NA,11,0,60631,70.3,28,f,0,2,PC3
+59,0,10,RENT,40000,not verified,n,credit card,971xx,OR,15,0,0,NA,NA,10,0,18601,88.2,11,f,0,1,PC1
+60,0,1,RENT,65000,not verified,n,small business,554xx,MN,2.79,1,2,19,27,4,1,2601,40.6,7,f,0,2,PC2
+61,0,6,MORTGAGE,61781,VERIFIED - income,n,credit card,453xx,OH,17.15,0,4,NA,NA,10,0,23065,51.1,31,f,0,3,PC4
+62,0,3,RENT,72000,VERIFIED - income,n,debt consolidation,483xx,MI,14.75,0,0,NA,NA,19,0,18421,67,28,f,0,2,PC2
+63,0,3,RENT,29000,not verified,n,debt consolidation,188xx,PA,17.63,0,0,27,NA,15,0,1155,11.3,24,f,0,1,PC3
+64,0,10,MORTGAGE,42500,VERIFIED - income,n,debt consolidation,601xx,IL,0.28,0,3,NA,92,3,1,45,0.6,16,f,0,2,PC5
+65,0,1,RENT,53052,VERIFIED - income source,n,other,790xx,TX,18.95,0,0,NA,NA,4,0,4556,53.6,7,f,0,2,PC5
+66,0,1,RENT,70000,VERIFIED - income source,n,credit card,200xx,DC,2.59,0,1,NA,NA,11,0,5231,2.4,20,f,0,2,PC1
+67,0,1,RENT,25000,VERIFIED - income source,n,debt consolidation,995xx,AK,14.59,0,1,NA,NA,13,0,11338,18.6,30,f,0,2,PC5
+68,0,10,MORTGAGE,80000,not verified,n,vacation,275xx,NC,20.59,1,2,15,NA,30,0,6654,22.6,56,f,0,3,PC3
+69,1,4,MORTGAGE,71000,VERIFIED - income,n,debt consolidation,333xx,FL,13.81,0,0,NA,NA,14,0,6953,67.5,24,f,0,3,PC4
+70,0,8,MORTGAGE,61200,VERIFIED - income source,n,debt consolidation,720xx,AR,20.94,0,3,NA,NA,8,0,3943,33.4,20,f,0,1,PC2
+71,0,1,RENT,48000,VERIFIED - income,n,wedding,100xx,NY,2.6,0,0,NA,NA,4,0,3935,46.3,5,f,0,2,PC3
+72,0,2,RENT,28956,VERIFIED - income source,n,debt consolidation,787xx,TX,24.08,1,2,16,NA,11,0,3349,21.2,20,f,0,3,PC5
+73,0,2,MORTGAGE,60000,not verified,n,other,791xx,TX,1.36,1,0,11,NA,12,0,2193,10.5,21,f,0,2,PC1
+74,1,5,RENT,44000,VERIFIED - income,n,debt consolidation,330xx,FL,7.15,0,0,NA,NA,8,0,4913,63.4,12,f,0,2,PC4
+75,0,3,MORTGAGE,55000,not verified,n,debt consolidation,334xx,FL,12.56,0,2,NA,NA,7,0,4280,28.2,8,f,0,3,PC1
+76,0,7,MORTGAGE,70000,not verified,n,credit card,700xx,LA,13.53,0,3,26,NA,12,0,73764,22.5,39,f,0,1,PC5
+77,0,1,RENT,47600,not verified,n,debt consolidation,209xx,MD,15.53,0,1,34,0,6,0,1233,35.2,7,m,0,2,PC2
+78,0,8,MORTGAGE,36000,not verified,n,debt consolidation,958xx,CA,21.9,3,1,9,NA,6,0,6965,89.3,20,m,0,2,PC3
+79,0,10,MORTGAGE,79992,VERIFIED - income,n,other,930xx,CA,21.75,1,0,23,NA,13,0,16156,74.5,30,m,0,1,PC5
+80,0,3,RENT,31000,VERIFIED - income source,n,debt consolidation,331xx,FL,19.66,0,2,31,NA,11,0,3058,28.8,12,m,0,2,PC3
+81,0,1,RENT,60000,VERIFIED - income source,n,wedding,760xx,TX,19.94,0,0,NA,NA,9,0,22253,44,27,m,0,2,PC1
+82,0,1,MORTGAGE,250000,VERIFIED - income,n,major purchase,297xx,SC,1.42,4,5,15,NA,5,0,427,23.7,43,m,0,1,PC1
+83,0,1,MORTGAGE,24000,VERIFIED - income source,n,home improvement,601xx,IL,3.25,0,0,NA,NA,5,0,1680,56,7,m,0,2,PC5
+84,0,1,RENT,25000,not verified,n,debt consolidation,201xx,VA,21.36,0,0,55,NA,4,0,1333,83.3,19,f,0,1,PC2
+85,0,10,MORTGAGE,65000,VERIFIED - income source,n,vacation,309xx,GA,2.33,1,1,17,NA,8,0,2937,10.8,17,f,0,2,PC4
+86,0,8,RENT,90000,VERIFIED - income,n,credit card,208xx,MD,5.24,0,1,42,NA,17,0,15077,46.7,28,f,0,1,PC3
+87,1,10,RENT,55000,not verified,n,other small business,306xx,GA,16.97,0,0,44,NA,5,0,3052,41.8,22,f,0,1,PC2
+88,0,4,RENT,159996,VERIFIED - income,n,credit card,432xx,OH,6.84,0,0,NA,NA,11,0,18115,98.5,35,f,0,1,PC1
+89,0,2,RENT,45000,not verified,n,debt consolidation,173xx,PA,17.28,0,7,78,88,11,1,3102,48.5,29,f,0,3,PC3
+90,1,4,RENT,70000,VERIFIED - income source,n,small business,946xx,CA,6.17,0,0,NA,NA,3,0,4789,47.9,3,f,0,2,PC4
+91,0,1,RENT,51400,not verified,n,debt consolidation,223xx,VA,1.77,0,2,NA,NA,7,0,1744,16,9,f,0,3,PC3
+92,0,4,RENT,33000,VERIFIED - income,n,debt consolidation,551xx,MN,17.38,1,1,19,NA,6,0,0,0,20,f,0,1,PC3
+93,0,7,MORTGAGE,130000,VERIFIED - income,n,small business,984xx,WA,7.76,0,0,38,NA,13,0,4039,14.8,38,f,0,3,PC2
+94,0,1,MORTGAGE,137004,VERIFIED - income,n,debt consolidation,296xx,SC,20.69,0,0,NA,NA,15,0,116150,54.6,34,f,0,2,PC4
+95,0,5,OWN,48575,VERIFIED - income source,n,debt consolidation,201xx,VA,22.33,0,1,NA,NA,15,0,9877,56.8,22,f,0,1,PC3
+96,0,10,MORTGAGE,155000,VERIFIED - income,n,debt consolidation,920xx,CA,12.4,0,0,NA,NA,9,0,23039,26.6,36,f,0,2,PC2
+97,0,10,MORTGAGE,81847,VERIFIED - income source,n,educational,080xx,NJ,6.03,0,5,NA,98,9,1,11754,41,21,f,0,2,PC1
+98,1,9,MORTGAGE,55200,not verified,n,small business,952xx,CA,20.39,2,0,17,NA,9,0,35294,95.9,49,f,0,3,PC4
+99,1,1,MORTGAGE,120000,VERIFIED - income,n,credit card,920xx,CA,9.69,0,0,54,NA,10,0,7796,32.2,27,f,0,2,PC4
+100,0,3,MORTGAGE,200000,VERIFIED - income source,n,debt consolidation,913xx,CA,6.71,0,0,NA,NA,11,0,8937,20.8,17,f,0,3,PC5
+101,0,1,RENT,47840,VERIFIED - income,n,debt consolidation,333xx,FL,24.18,0,0,NA,NA,8,0,21507,68.5,8,f,0,1,PC2
+102,0,3,RENT,61000,VERIFIED - income source,n,vacation,752xx,TX,0.98,0,5,NA,NA,8,0,1939,6.2,9,f,0,3,PC2
+103,0,7,OWN,61000,VERIFIED - income,n,house,170xx,PA,9.68,0,3,NA,113,7,1,1284,6.3,22,f,0,2,PC4
+104,0,2,OWN,27600,VERIFIED - income source,n,debt consolidation,310xx,GA,21.83,0,0,NA,NA,5,0,7135,46.6,6,f,0,1,PC1
+105,0,8,RENT,65000,not verified,n,other,021xx,MA,0.65,0,0,NA,NA,7,0,1252,4.5,12,f,0,3,PC2
+106,0,8,MORTGAGE,56000,not verified,n,debt consolidation,982xx,WA,8.46,0,0,NA,NA,5,0,13923,77.3,12,f,0,1,PC4
+107,1,1,RENT,36000,not verified,n,debt consolidation,013xx,MA,17.27,0,3,NA,110,9,1,7976,47.2,15,f,0,1,PC3
+108,1,1,RENT,22800,VERIFIED - income source,n,home improvement,967xx,HI,24.89,0,1,27,NA,3,0,192,48,5,f,0,3,PC3
+109,0,4,MORTGAGE,40000,not verified,n,other,455xx,OH,16.47,0,4,41,NA,9,0,8747,74.8,16,f,0,1,PC2
+110,0,10,MORTGAGE,90474,VERIFIED - income,n,debt consolidation,207xx,MD,9.64,0,1,48,NA,20,0,22400,19.9,62,f,0,2,PC1
+111,0,10,MORTGAGE,130000,VERIFIED - income,n,debt consolidation,852xx,AZ,5.39,0,0,NA,NA,6,0,20964,35.6,29,f,0,2,PC4
+112,0,10,MORTGAGE,45000,VERIFIED - income source,n,credit card,301xx,GA,15.6,0,0,NA,NA,4,0,17588,93.1,13,f,0,1,PC4
+113,1,1,RENT,115000,VERIFIED - income,n,wedding,903xx,CA,1.39,0,1,NA,NA,9,0,30215,49.6,17,f,0,3,PC2
+114,0,2,RENT,51400,not verified,n,credit card,752xx,TX,19.14,0,3,NA,NA,10,0,10160,59.1,24,f,0,2,PC5
+115,0,5,RENT,46199,VERIFIED - income,n,credit card,806xx,CO,23.42,0,4,NA,NA,6,0,22558,76.5,11,f,0,3,PC2
+116,0,10,MORTGAGE,82000,VERIFIED - income,n,home improvement,481xx,MI,14.59,0,8,NA,NA,10,0,31830,41.3,28,f,0,3,PC4
+117,0,9,MORTGAGE,61000,VERIFIED - income source,n,credit card,856xx,AZ,5.08,0,0,NA,NA,5,0,12653,48.9,14,f,0,3,PC1
+118,0,4,RENT,120000,VERIFIED - income,n,debt consolidation,787xx,TX,15.23,0,1,NA,NA,11,0,25822,71.1,27,f,0,1,PC4
+119,0,2,MORTGAGE,100000,VERIFIED - income source,n,debt consolidation,256xx,WV,9.13,0,0,43,87,10,1,9331,79.1,24,f,0,2,PC3
+120,0,na,MORTGAGE,55200,VERIFIED - income,n,debt consolidation,157xx,PA,16.76,0,1,38,NA,26,0,26676,33.1,53,f,0,1,PC3
+121,0,3,MORTGAGE,112800,VERIFIED - income,n,debt consolidation,144xx,NY,14.35,0,1,NA,NA,17,0,38121,59.6,35,f,0,2,PC5
+122,0,10,MORTGAGE,145000,VERIFIED - income,n,debt consolidation,063xx,CT,5.74,0,3,NA,NA,6,0,28648,61,26,f,0,3,PC3
+123,0,10,MORTGAGE,75000,VERIFIED - income,n,debt consolidation,773xx,TX,13.15,0,0,NA,NA,13,0,13901,29.8,33,f,0,3,PC2
+124,0,6,RENT,75000,VERIFIED - income source,n,debt consolidation,021xx,MA,19.09,0,1,78,NA,12,0,16865,70,32,f,0,3,PC5
+125,0,5,RENT,65000,VERIFIED - income,n,debt consolidation,799xx,TX,20.62,0,3,NA,93,11,1,14658,68.2,27,f,0,1,PC2
+126,0,3,RENT,50000,not verified,n,credit card,606xx,IL,13.73,0,0,NA,NA,5,0,20791,94.5,10,f,0,2,PC5
+127,0,10,RENT,85000,not verified,n,major purchase,070xx,NJ,17.92,0,0,28,NA,4,0,28824,39.2,7,f,0,1,PC3
+128,0,10,RENT,137481,not verified,n,debt consolidation,761xx,TX,4.81,1,0,16,NA,5,0,20042,50.9,34,f,0,2,PC4
+129,0,4,RENT,47000,not verified,n,credit card,951xx,CA,13.53,0,0,NA,NA,7,0,7686,78.4,10,f,0,1,PC1
+130,0,5,RENT,58344,not verified,n,debt consolidation,662xx,KS,6.38,0,1,56,NA,6,0,11927,75.5,19,f,0,2,PC4
+131,0,1,RENT,32400,not verified,n,car,554xx,MN,21.22,0,1,NA,NA,8,0,14667,69.2,15,f,0,1,PC5
+132,0,1,MORTGAGE,122000,not verified,n,credit card,600xx,IL,7.55,0,5,NA,NA,8,0,62681,25.9,25,f,0,3,PC2
+133,1,1,MORTGAGE,65000,VERIFIED - income,n,debt consolidation small business,606xx,IL,3.01,0,1,NA,NA,5,0,6526,94.6,8,f,0,1,PC1
+134,0,5,MORTGAGE,82000,not verified,n,debt consolidation,440xx,OH,21.73,1,6,6,NA,15,0,111611,17.4,24,f,0,3,PC4
+135,0,10,RENT,52000,VERIFIED - income,n,debt consolidation,402xx,KY,16.57,0,1,37,NA,7,0,5437,22.4,41,f,0,1,PC4
+136,0,5,RENT,180000,VERIFIED - income source,n,debt consolidation,946xx,CA,21.17,0,0,NA,NA,16,0,12318,78,61,f,0,2,PC1
+137,0,10,RENT,55000,VERIFIED - income,n,other,112xx,NY,15.75,0,0,NA,NA,8,0,10572,53.9,18,f,0,1,PC5
+138,0,3,RENT,78402,not verified,n,debt consolidation,900xx,CA,10.24,1,0,5,NA,3,0,1094,31.3,16,f,0,1,PC5
+139,0,10,RENT,65496,not verified,n,other,782xx,TX,13.81,0,1,26,NA,11,0,5205,13.4,39,f,0,1,PC3
+140,0,7,MORTGAGE,200000,VERIFIED - income,n,debt consolidation,920xx,CA,3.74,0,1,NA,NA,10,0,12147,67.5,18,f,0,1,PC1
+141,0,4,MORTGAGE,30000,not verified,n,credit card,605xx,IL,20.28,0,0,NA,NA,13,0,6024,45.3,24,f,0,3,PC4
+142,0,2,MORTGAGE,114000,not verified,n,debt consolidation,762xx,TX,15.02,0,2,NA,101,12,1,18071,65.5,24,f,0,1,PC2
+143,0,4,OWN,37560,not verified,n,debt consolidation,706xx,LA,26.84,0,0,NA,NA,4,0,17596,96.2,8,f,0,2,PC2
+144,0,8,RENT,75000,VERIFIED - income source,n,major purchase,703xx,LA,6.22,0,2,NA,NA,11,0,72,0.6,12,f,0,2,PC1
+145,0,1,RENT,61000,not verified,n,credit card,302xx,GA,23.08,0,5,NA,NA,7,0,9433,76.3,13,f,0,1,PC4
+146,1,1,MORTGAGE,100000,VERIFIED - income,n,small business,907xx,CA,13.31,0,1,NA,NA,16,0,13931,75.8,24,f,0,3,PC4
+147,0,1,RENT,28000,not verified,n,major purchase,181xx,PA,1.76,0,1,NA,NA,6,0,1292,4.3,8,f,0,2,PC4
+148,0,10,OWN,130000,VERIFIED - income,n,credit card,945xx,CA,19.62,0,0,NA,NA,9,0,61165,91.3,28,f,0,3,PC5
+149,0,1,MORTGAGE,37500,not verified,n,home improvement,286xx,NC,6.62,0,1,NA,NA,4,0,7187,92.1,21,f,0,2,PC3
+150,1,10,RENT,45000,VERIFIED - income source,n,other,922xx,CA,14.11,1,3,17,NA,7,0,3641,79.2,19,f,0,3,PC5
+151,1,7,RENT,52800,VERIFIED - income source,n,credit card,268xx,WV,24.94,0,1,NA,NA,8,0,10290,85,12,f,0,3,PC1
+152,1,10,MORTGAGE,39168,not verified,n,debt consolidation,945xx,CA,24.85,0,1,36,77,13,1,6347,81.6,30,f,0,1,PC2
+153,0,5,RENT,58000,VERIFIED - income source,n,debt consolidation,787xx,TX,20.32,0,0,NA,NA,12,0,6790,52.6,29,f,0,3,PC4
+154,0,10,MORTGAGE,88812.93,VERIFIED - income,n,credit card,181xx,PA,18.56,0,2,NA,NA,8,0,33844,85.9,27,f,0,2,PC5
+155,0,10,RENT,42000,not verified,n,other,750xx,TX,21.17,0,2,NA,NA,25,0,9669,16.6,37,f,0,1,PC5
+156,0,2,MORTGAGE,43000,VERIFIED - income,n,other,775xx,TX,23.44,0,2,NA,NA,9,0,5049,48.5,12,f,0,3,PC4
+157,0,8,MORTGAGE,115000,not verified,n,debt consolidation,029xx,RI,7.78,0,2,44,NA,7,0,12340,71.3,46,f,0,2,PC4
+158,0,10,MORTGAGE,93000,not verified,n,home improvement,481xx,MI,10.89,0,0,NA,NA,13,0,60376,47.9,27,f,0,3,PC5
+159,0,1,RENT,10000,not verified,n,educational,606xx,IL,19.68,0,0,NA,NA,3,0,603,6.2,4,f,0,3,PC2
+160,0,7,OWN,350000,not verified,n,small business,024xx,MA,11.38,0,7,NA,NA,13,0,1207359,56,33,f,0,2,PC5
+161,0,2,MORTGAGE,51996,VERIFIED - income source,n,debt consolidation,935xx,CA,23.96,0,3,NA,NA,8,0,8437,63,14,f,0,3,PC1
+162,0,10,MORTGAGE,140000,VERIFIED - income source,n,credit card,913xx,CA,3.05,0,0,28,NA,21,0,16621,20.6,50,f,0,1,PC2
+163,0,3,RENT,61200,not verified,n,debt consolidation,111xx,NY,11.02,0,0,NA,NA,12,0,6577,51,20,f,0,3,PC5
+164,0,4,RENT,40000,VERIFIED - income source,n,debt consolidation,112xx,NY,11.19,0,2,NA,NA,6,0,17554,57,8,f,0,1,PC1
+165,0,1,RENT,25000,not verified,n,house,941xx,CA,7.58,0,0,81,NA,6,0,7090,73.1,10,f,0,3,PC5
+166,1,4,OWN,600000,VERIFIED - income,n,major purchase,900xx,CA,7.09,0,1,31,NA,9,0,58222,39,38,f,0,3,PC5
+167,0,9,MORTGAGE,95000,not verified,n,debt consolidation,070xx,NJ,4.47,0,0,81,NA,4,0,13855,42.5,21,f,0,1,PC5
+168,0,4,RENT,85000,VERIFIED - income source,n,major purchase,210xx,MD,5.15,0,0,NA,NA,6,0,802,0.9,9,f,0,2,PC1
+169,0,10,MORTGAGE,57000,VERIFIED - income,n,debt consolidation,785xx,TX,28.25,0,0,NA,NA,18,0,25136,36.2,41,f,0,3,PC2
+170,0,10,MORTGAGE,75288,not verified,n,debt consolidation,612xx,IL,7.73,0,0,47,NA,6,0,18352,61.2,19,f,0,2,PC5
+171,0,10,MORTGAGE,124000,not verified,n,debt consolidation,105xx,NY,18.56,0,4,NA,NA,11,0,117200,91.2,16,f,0,3,PC2
+172,0,10,RENT,60000,VERIFIED - income source,n,debt consolidation,631xx,MO,9.52,0,5,NA,NA,4,0,1293,39.2,17,f,0,1,PC2
+173,0,10,RENT,36000,VERIFIED - income,n,debt consolidation,112xx,NY,2.9,0,1,NA,NA,7,0,2980,31.7,10,f,0,2,PC1
+174,0,1,RENT,21000,VERIFIED - income,n,other,917xx,CA,20.11,0,0,NA,NA,4,0,2797,93.2,8,f,0,3,PC3
+175,0,6,MORTGAGE,36600,not verified,n,other,301xx,GA,23.67,0,0,NA,NA,10,0,624,3.5,33,f,0,1,PC1
+176,0,10,MORTGAGE,87000,not verified,n,other,997xx,AK,5.57,1,0,13,NA,5,0,5742,55.2,18,f,0,1,PC3
+177,0,5,MORTGAGE,96216,VERIFIED - income,n,home improvement,941xx,CA,1.91,0,2,NA,NA,14,0,3351,0.4,47,f,0,3,PC4
+178,0,1,MORTGAGE,63096,not verified,n,debt consolidation,741xx,OK,2.66,0,1,NA,NA,9,0,6367,37.3,14,f,0,3,PC2
+179,0,7,RENT,200000,VERIFIED - income source,n,debt consolidation,347xx,FL,9.55,0,1,NA,NA,29,0,29680,45.8,41,f,0,3,PC3
+180,0,8,MORTGAGE,35500,not verified,n,debt consolidation,246xx,VA,23.8,1,1,18,NA,17,0,5739,26.7,28,f,0,1,PC2
+181,0,10,RENT,84000,not verified,n,small business,945xx,CA,23.04,0,3,39,0,13,0,24280,93.4,38,f,0,2,PC4
+182,0,1,MORTGAGE,36000,VERIFIED - income source,n,major purchase,302xx,GA,13.43,0,3,82,63,8,1,5049,78.9,17,f,0,2,PC3
+183,0,1,OWN,30000,not verified,n,wedding,231xx,VA,0.68,0,0,NA,NA,8,0,893,38.8,11,f,0,2,PC4
+184,0,7,OWN,42000,VERIFIED - income,n,debt consolidation,902xx,CA,13.51,0,0,NA,NA,7,0,1741,18.7,15,f,0,3,PC1
+185,0,8,MORTGAGE,100000,VERIFIED - income source,n,other,926xx,CA,24.57,0,5,NA,NA,15,0,26561,91.5,39,f,0,3,PC2
+186,0,4,MORTGAGE,100000,VERIFIED - income,n,debt consolidation,775xx,TX,6.05,0,0,79,NA,5,0,11006,65.1,36,f,0,2,PC4
+187,0,9,MORTGAGE,150000,VERIFIED - income source,n,debt consolidation,080xx,NJ,14.9,0,6,NA,NA,14,0,10976,68.6,22,f,0,2,PC2
+188,0,3,RENT,62280,VERIFIED - income source,n,debt consolidation,921xx,CA,7.78,0,1,NA,NA,10,0,13316,33.3,34,f,0,3,PC5
+189,0,9,RENT,65000,not verified,n,debt consolidation,980xx,WA,16.8,0,0,NA,NA,9,0,18550,46.4,24,f,0,2,PC3
+190,0,10,MORTGAGE,80070,VERIFIED - income,n,small business,077xx,NJ,15.42,0,0,NA,NA,15,0,52856,74.7,39,f,0,2,PC5
+191,0,10,MORTGAGE,72972.35,VERIFIED - income,n,credit card,113xx,NY,24.16,0,1,NA,NA,10,0,17312,60.3,15,f,0,3,PC4
+192,0,2,MORTGAGE,36000,VERIFIED - income source,n,debt consolidation,925xx,CA,10.8,0,0,NA,NA,9,0,7496,85.2,13,f,0,1,PC5
+193,0,1,RENT,35000,not verified,n,credit card,067xx,CT,12.82,0,0,69,38,10,1,10862,71.6,22,f,0,2,PC3
+194,0,3,RENT,42264,not verified,n,debt consolidation,606xx,IL,16.83,1,2,23,NA,11,0,8911,53.4,19,f,0,1,PC5
+195,0,10,MORTGAGE,133119,VERIFIED - income source,n,credit card,320xx,FL,19.36,0,1,NA,NA,13,0,10461,64.6,55,f,0,3,PC2
+196,0,8,MORTGAGE,60996,VERIFIED - income source,n,other,106xx,NY,17.82,0,0,NA,NA,14,0,58504,30.9,34,f,0,2,PC1
+197,1,4,RENT,28000,VERIFIED - income,n,debt consolidation,112xx,NY,12.21,1,1,22,NA,12,0,6347,70,16,f,0,2,PC2
+198,0,2,RENT,40000,not verified,n,debt consolidation,760xx,TX,19.32,0,0,34,NA,7,0,2707,31.5,13,f,0,2,PC1
+199,0,1,MORTGAGE,25040,VERIFIED - income source,n,home improvement,350xx,AL,16.29,0,0,NA,NA,5,0,50638,8.5,8,f,0,1,PC2
+200,0,9,MORTGAGE,150000,not verified,n,debt consolidation,200xx,DC,12.93,0,1,76,NA,12,0,58179,84.2,46,f,0,2,PC5

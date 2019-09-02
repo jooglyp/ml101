@@ -17,4 +17,3 @@ def init() -> None:
     logging.root.addHandler(handler)
 
     # logging.getLogger("").setLevel(logging.WARNING)
-
