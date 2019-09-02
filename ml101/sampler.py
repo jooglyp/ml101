@@ -29,11 +29,11 @@ class DataPreparer:
         self.x_rnn_resampled = None
         self.y_rnn_resampled = None
 
-    def clientside_pca(self, X: pandas.DataFrame):
+    def clientside_pca(self, X: pandas.DataFrame, category_limit: int):
         # Concatenate data
         pca_application = pca.ApplyPCA(X)
         pca_application.coerce_data()
-        self.cleaned_data = pca_application.yield_clean_data(autorestrictions=True)
+        self.cleaned_data = pca_application.yield_clean_data(category_limit, autorestrictions=True)
         LOGGER.info(self.cleaned_data)
         LOGGER.info(self.cleaned_data.columns)
 
@@ -41,13 +41,14 @@ class DataPreparer:
         self.important_covariates, self.model_covariates = pca_application.apply_pca(
             self.cleaned_data, pca_application.clientside_covariate_exclusion, assignment=False)
 
-    def assignment_pca(self, csv) -> None:
+    def assignment_pca(self, csv, category_limit: int) -> None:
         """Loads csv into memory as pandas dataframe and applies some transformations."""
         self.raw_data = pandas.read_csv(csv)
 
         pca_application = pca.ApplyPCA(self.raw_data)
         pca_application.coerce_data()
-        self.cleaned_data = pca_application.yield_clean_data(categorical_restriction=['addr_state', 'zip_code'])
+        self.cleaned_data = pca_application.yield_clean_data(category_limit,
+                                                             categorical_restriction=['addr_state', 'zip_code'])
         LOGGER.info(self.cleaned_data)
         LOGGER.info(self.cleaned_data.columns)
         exclude_variables = ['mths_since_last_delinq', 'mths_since_last_record',
@@ -105,6 +106,15 @@ class DataPreparer:
         else:
             return self.model_covariates
 
+    def secondary_pca(self, X: pandas.DataFrame) -> None:
+        """
+        Second round of PCA for strictly creating components to use in model fitting.
+        Args:
+            X:
+
+        Returns:
+
+        """
     def sample(self, y: numpy.ndarray = None, X: pandas.DataFrame = None, pca_importance: pandas.DataFrame = None,
                model_covariates: list = None, neighbors=2, sample_proportion=0.9, pca_proportion=0.95,
                assignment=False):
@@ -130,6 +140,7 @@ class DataPreparer:
             LOGGER.info(len(X))
             utils.print_delimiter()
             LOGGER.info(len(y))
+            self.secondary_pca(self.X)
             self.resampling(neighbors, sample_proportion)
         else:
             self.model_covariates = self.randomize_top_covariates(pca_importance, model_covariates, pca_proportion)
@@ -138,6 +149,7 @@ class DataPreparer:
             LOGGER.info(len(X))
             utils.print_delimiter()
             LOGGER.info(len(y))
+            self.secondary_pca(self.X)
             self.resampling(neighbors, sample_proportion)
 
     def split_data_for_sampling(self, covariates: list) -> typing.Tuple[pandas.DataFrame, numpy.ndarray]:

@@ -19,14 +19,14 @@ def main():
     """
     with open("/tmp/data.csv", "r") as fileobj:
         dataset.assignment_pca(fileobj)
-    dataset.sample(assignment=True)
+    dataset.sample(category_limit=30, assignment=True)
     """
 
     with open("/tmp/data.csv", "r") as fileobj:
         raw_data = pandas.read_csv(fileobj)
         X = raw_data[raw_data.columns.difference(['is_bad'])]
         y = numpy.array(raw_data[['is_bad']])
-        dataset.clientside_pca(X)
+        dataset.clientside_pca(X, category_limit=30)
     dataset.sample(y=y, neighbors=2, sample_proportion=0.3)
 
     #---#

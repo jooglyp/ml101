@@ -70,7 +70,7 @@ class ML101Model:
     def assignment_fit(self):
         self.kfold_cv()
         optimizer = ParameterOptimizer(self)
-        optimizer.param_tuning(grid_neighbors=2, grid_sample_proportion=0.7)
+        optimizer.param_tuning(grid_neighbors=2, grid_sample_proportion=0.7, category_limit=20)
 
 
 class Evaluators:
@@ -159,7 +159,7 @@ class ParameterOptimizer(Evaluators):
         self.mlmodel = mlmodel
         self.iterate_dataset = None
 
-    def param_tuning(self, grid_neighbors: int, grid_sample_proportion: float):
+    def param_tuning(self, grid_neighbors: int, grid_sample_proportion: float, category_limit: int):
         self.compute_confusion_matrices()
         avg_rmse = self.compute_rmse()
         avg_logloss = self.compute_conditional_log_loss()
@@ -168,7 +168,7 @@ class ParameterOptimizer(Evaluators):
         important_covariates = self.mlmodel.important_covariates
         last_model_covariates = self.mlmodel.model_covariates
         dataset = sampler.DataPreparer()
-        dataset.clientside_pca(self.mlmodel.original_Xdf)
+        dataset.clientside_pca(self.mlmodel.original_Xdf, category_limit=category_limit)
         dataset.sample(self.mlmodel.original_yarray, neighbors=grid_neighbors, sample_proportion=grid_sample_proportion,
                        pca_importance=important_covariates, model_covariates=last_model_covariates,
                        pca_proportion=0.9)
@@ -207,7 +207,7 @@ class ExecuteML101Model:
         """
         #TODO: calls optimizer to get best xgb_est.
         dataset = sampler.DataPreparer()
-        dataset.clientside_pca(X)
+        dataset.clientside_pca(X, category_limit=30)
         dataset.sample(y)
         mlmodel = ML101Model(dataset.x_rnn_resampled, dataset.y_rnn_resampled,
                              dataset.X.columns, 'is_bad', dataset.important_covariates,

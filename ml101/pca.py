@@ -162,7 +162,8 @@ class ApplyPCA(CleanData):
         LOGGER.info(encoded_matrix_df)
         return encoded_matrix_df, categories
 
-    def _encode_categoricals(self, categorical_restriction: list = None, autorestriction=False) -> dict:
+    def _encode_categoricals(self, categorical_restriction: list = None, category_limit: int = 20,
+                             autorestriction=False) -> dict:
         """
         Creates categorical one-hot-encoded matrices for all categorical covariates
         Returns: dictionary of the form {'<categotical covariate>: pandas.DataFrame}
@@ -177,7 +178,7 @@ class ApplyPCA(CleanData):
                                                                        categorical_covariate)
             encoded_categoricals[categorical_covariate] = encoded_matrix_df
             if autorestriction:
-                if len(categories) > 10:  # if encoding yields more than 10 binary covariates, skip covariate.
+                if len(categories) > category_limit:  # skip covariate if more than limit param
                     self.clientside_covariate_exclusion.append(categorical_covariate)
                 self.categorical_map[categorical_covariate] = (categories, encoded_matrix_df.columns)
             utils.print_delimiter()
@@ -209,7 +210,8 @@ class ApplyPCA(CleanData):
         flattened_list = list(itertools.chain(*covariates))
         return flattened_list
 
-    def yield_clean_data(self, categorical_restriction: list = None, autorestrictions=False) -> pandas.DataFrame:
+    def yield_clean_data(self, category_limit: int, categorical_restriction: list = None,
+                         autorestrictions=False) -> pandas.DataFrame:
         """
 
         Args:
@@ -224,7 +226,7 @@ class ApplyPCA(CleanData):
         LOGGER.info("Numerical Covariates Dataframe:")
         LOGGER.info(numerical_dataframe)
         # dictionary of dataframes:
-        encoded_categoricals = self._encode_categoricals(categorical_restriction, autorestrictions)
+        encoded_categoricals = self._encode_categoricals(categorical_restriction, category_limit, autorestrictions)
         categorical_dataframes = list(encoded_categoricals.values())
         LOGGER.info("List of Categorical Covariates Dataframes")
         LOGGER.info(categorical_dataframes)
