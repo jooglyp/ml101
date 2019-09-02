@@ -71,7 +71,22 @@ class DataPreparer:
         utils.print_delimiter()
         LOGGER.info(self.y_rnn_resampled)
 
-    def sample(self, y: numpy.ndarray = None, assignment=False):
+    def randomize_top_covariates(self, pca_importance: pandas.DataFrame, model_covariates: list):
+        if pca_importance is not None:
+            utils.print_delimiter()
+            LOGGER.info("Building a Random Top Covariates Filter")
+            LOGGER.info(pca_importance)
+            base_covariates = pca_importance[0].values  # values of series, which are variable names
+            LOGGER.info(base_covariates)
+            LOGGER.info(model_covariates)
+            remaining_covariates = [cov for cov in model_covariates if cov not in base_covariates]
+            LOGGER.info(remaining_covariates)
+            raise
+        else:
+            return self.model_covariates
+
+    def sample(self, y: numpy.ndarray = None, X: pandas.DataFrame = None, pca_importance: pandas.DataFrame = None,
+               model_covariates: list = None, assignment=False):
         """
         self.model_covariates are always a list of the X's.
         Returns: Resampled dataset ready for model fitting.
@@ -86,6 +101,7 @@ class DataPreparer:
             LOGGER.info(len(y))
             self.resampling()
         else:
+            self.model_covariates = self.randomize_top_covariates(pca_importance, model_covariates)
             X, y = self.prepare_data_for_sampling(self.model_covariates, y)
             utils.print_delimiter()
             LOGGER.info(len(X))
@@ -102,13 +118,14 @@ class DataPreparer:
 
         """
         utils.print_delimiter()
-        LOGGER.info("Splitting data for resampling with the following covariates: {}".format(covariates))
         data = copy.deepcopy(self.cleaned_data[covariates])
         LOGGER.info("Original Dataset Size: {}".format(len(data)))
         LOGGER.info("Dropping row data across model covariates containing NaN values.")
         data.dropna(inplace=True)  # drop rows that contain nan across any covariates
         LOGGER.info(data)
         self.X = data[data.columns.difference(['is_bad'])]
+        self.X = self.check_id(self.X)
+        LOGGER.info("Splitting data for resampling with the following covariates: {}".format(self.X))
         self.y = numpy.array(data[['is_bad']])
         return self.X, self.y
 
@@ -122,7 +139,6 @@ class DataPreparer:
 
         """
         utils.print_delimiter()
-        LOGGER.info("X will include the following covariates: {}".format(covariates))
         data = copy.deepcopy(self.cleaned_data[covariates])
         LOGGER.info("Original Dataset Size: {}".format(len(data)))
         LOGGER.info("Dropping row data across model covariates containing NaN values.")
@@ -130,12 +146,25 @@ class DataPreparer:
         data.dropna(inplace=True)  # drop rows that contain nan across any covariates
         LOGGER.info(data)
         self.X = data[data.columns.difference(['actual_y'])]
+        self.X = self.check_id(self.X)
+        LOGGER.info("X will include the following covariates: {}".format(self.X.columns))
         self.y = numpy.array(data[['actual_y']])
         return self.X, self.y
 
-    @staticmethod
-    def rnn_undersampling(x: pandas.DataFrame, y: numpy.ndarray) -> typing.Tuple[pandas.DataFrame,
-                                                                                 pandas.DataFrame]:
+    def check_id(self, df: pandas.DataFrame) -> pandas.DataFrame:
+        if 'Id' in df.columns:
+            adjusted_df = df.drop(['Id'], axis=1)
+            LOGGER.info(adjusted_df)
+            return adjusted_df
+        elif 'id' in df.columns:
+            adjusted_df = df.drop(['id'], axis=1)
+            LOGGER.info(adjusted_df)
+            return adjusted_df
+        else:
+            return df
+
+    def rnn_undersampling(self, x: pandas.DataFrame, y: numpy.ndarray) -> typing.Tuple[numpy.ndarray,
+                                                                                 numpy.ndarray]:
         """
         Repeated Edited Nearest Neighbors.
         Args:
@@ -146,6 +175,8 @@ class DataPreparer:
 
         """
         #TODO: unit test to ensure X and y lengths are the same
+        #TODO: unit test to ensure Id is not in x or y
+        x = self.check_id(x)
         rnn_undersampler = RepeatedEditedNearestNeighbours(random_state=82, n_neighbors=4, return_indices=True,
                                                            kind_sel='mode', max_iter=400, ratio='majority')
 
@@ -156,9 +187,8 @@ class DataPreparer:
         LOGGER.info("RNN undersampling yielded {} number of y_resampled observations".format(len(y_resampled)))
         return X_resampled, y_resampled
 
-    @staticmethod
-    def random_undersampling(x: pandas.DataFrame, y: numpy.ndarray) -> typing.Tuple[pandas.DataFrame,
-                                                                                    pandas.DataFrame]:
+    def random_undersampling(self, x: pandas.DataFrame, y: numpy.ndarray) -> typing.Tuple[numpy.ndarray,
+                                                                                    numpy.ndarray]:
         """
         Random Undersampling.
         Args:
@@ -169,6 +199,8 @@ class DataPreparer:
 
         """
         #TODO: unit test to ensure X and y lengths are the same
+        #TODO: unit test to ensure Id is not in x or y
+        x = self.check_id(x)
         random_undersampler = RandomUnderSampler(ratio={1: 1000, 0: 8000})
 
         X_resampled, y_resampled = random_undersampler.fit_sample(copy.deepcopy(x), copy.deepcopy(y).ravel())

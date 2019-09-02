@@ -31,8 +31,11 @@ def main():
     dataset.sample(y=y)
 
     #---#
+    LOGGER.info(dataset.x_rnn_resampled)
+    LOGGER.info(dataset.y_rnn_resampled)
     xgboost_model = model.ML101Model(dataset.x_rnn_resampled, dataset.y_rnn_resampled,
-                                     dataset.X.columns, 'is_bad', dataset.important_covariates)
+                                     dataset.X.columns, 'is_bad', dataset.important_covariates,
+                                     dataset.model_covariates, X, y)
     xgboost_model.assignment_fit()
 
     #---------------------------------------#

@@ -25,12 +25,16 @@ CLIENT = dask.distributed.Client()
 
 class ML101Model:
     def __init__(self, X: numpy.ndarray, y: numpy.ndarray, xlabels: list, ylabel: str,
-                 important_covariates: pandas.DataFrame):
+                 important_covariates: pandas.DataFrame, model_covariates: list,
+                 original_Xdf: pandas.DataFrame, original_yarray: numpy.ndarray):
         self.X = da.from_array(X, chunks=X.shape)
         self.y = da.from_array(y, chunks=y.shape)
         self.xlabels = xlabels
         self.ylabel = ylabel
         self.important_covariates = important_covariates
+        self.model_covariates = model_covariates
+        self.original_Xdf = original_Xdf
+        self.original_yarray = original_yarray
         self.ytest_iterations = []  # list to store kfold crossvalidation results
         self.ypred_iterations = []  # list to store kfold crossvalidation results
         self.predicted_probability_iterations = []  # list to store predicted probabilities
@@ -42,10 +46,6 @@ class ML101Model:
         scaler = MinMaxScaler(feature_range=(0, 1))
         x_scaled = scaler.fit_transform(self.X)
         return x_scaled
-
-    @staticmethod
-    def dask_transform(X: pandas.DataFrame) -> dask.dataframe.DataFrame:
-        return dd.from_pandas(X, npartitions=1)
 
     def kfold_cv(self):
         """
@@ -155,7 +155,20 @@ class ParameterOptimizer(Evaluators):
         super().__init__(mlmodel)
         self.mlmodel = mlmodel
 
+    def drop_if_not_high_pca_variance(self, important_covariates: pandas.DataFrame, last_model_covariates: list):
+        dataset = sampler.DataPreparer()
+        dataset.clientside_pca(self.mlmodel.original_Xdf)
+        dataset.sample(self.mlmodel.original_yarray,
+                       pca_importance=important_covariates, model_covariates=last_model_covariates)
+
     def adjust_with_pca(self):
+        important_covariates = self.mlmodel.important_covariates
+        last_model_covariates = self.mlmodel.model_covariates
+        new_exclusion_covariates = self.drop_if_not_high_pca_variance(important_covariates, last_model_covariates)
+
+        return None
+
+    def adjust_with_scores(self):
         self.compute_confusion_matrices()
         self.compute_rmse()
         self.compute_conditional_log_loss()
@@ -183,7 +196,8 @@ class ExecuteML101Model:
         dataset.clientside_pca(X)
         dataset.sample(y)
         mlmodel = ML101Model(dataset.x_rnn_resampled, dataset.y_rnn_resampled,
-                             dataset.X.columns, 'is_bad', dataset.important_covariates)
+                             dataset.X.columns, 'is_bad', dataset.important_covariates,
+                             dataset.model_covariates, X, y)
         mlmodel.kfold_cv()
         optimizer = ParameterOptimizer(mlmodel)
 

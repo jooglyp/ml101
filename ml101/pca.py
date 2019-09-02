@@ -308,13 +308,17 @@ class ApplyPCA(CleanData):
             excluded_variables: list of variables to exclude of the form ['X', 'Z']
         """
         excluded = []
+        LOGGER.info(df)
         for column in df.columns:
             for to_exclude in excluded_variables:
                 if column.startswith(to_exclude):
                     excluded.append(column)
                     self.excluded_variables.append(column)
                     break
-        return df.drop(excluded, axis=1)
+        LOGGER.info(self.excluded_variables)
+        adjusted_df = df.drop(excluded, axis=1)
+        LOGGER.info(adjusted_df)
+        return adjusted_df
 
     def correct_for_mar(self, df: pandas.DataFrame, threshold: float) -> pandas.DataFrame:
         """
@@ -327,13 +331,36 @@ class ApplyPCA(CleanData):
 
         """
         excluded = []
+        LOGGER.info(df)
         for col in df.columns:
             vector = df[col]  # pandas.Series
             if (vector.isna().sum() / len(vector)) > threshold:
                 excluded.append(col)
                 self.excluded_variables.append(col)
-        LOGGER.info(excluded)
-        return df.drop(excluded, axis=1)
+        LOGGER.info(self.excluded_variables)
+        adjusted_df = df.drop(excluded, axis=1)
+        LOGGER.info(adjusted_df)
+        return adjusted_df
+
+    def check_id_list(self, model_vars: list) -> list:
+        if 'Id' in model_vars:
+            return model_vars.remove('Id')
+        elif 'id' in model_vars:
+            return model_vars.remove('id')
+        else:
+            return model_vars
+
+    def check_id(self, df: pandas.DataFrame) -> pandas.DataFrame:
+        if 'Id' in df.columns:
+            adjusted_df = df.drop(['Id'], axis=1)
+            LOGGER.info(adjusted_df)
+            return adjusted_df
+        elif 'id' in df.columns:
+            adjusted_df = df.drop(['id'], axis=1)
+            LOGGER.info(adjusted_df)
+            return adjusted_df
+        else:
+            return df
 
     def apply_pca(self, df: pandas.DataFrame, excluded_variables: list, assignment=False) -> \
             typing.Tuple[pandas.DataFrame, list]:
@@ -352,11 +379,17 @@ class ApplyPCA(CleanData):
         if assignment:
             df = df.drop(['is_bad'], axis=1)
             df = df.drop(excluded_variables, axis=1)  # drop variables that will not covary much due to MAR
+            df = self.check_id(df)
             self.excluded_variables = excluded_variables
+            LOGGER.info(self.excluded_variables)
         else:
             df = self.smartdrop(df, excluded_variables)
+            LOGGER.info(df.columns)
             df = self.correct_for_mar(df, 0.5)  # drop variables that will not covary much due to MAR
-
+            df = self.check_id(df)
+            LOGGER.info(df.columns)
+            # LOGGER.info(self.excluded_variables)
+        LOGGER.info(df.columns)
         df.dropna(inplace=True)  # drop rows that contain nan across any covariates
 
         # PCA Transformation:
@@ -378,5 +411,8 @@ class ApplyPCA(CleanData):
         # Yield model covariates:
 
         model_variables = set(self.model_covariates) - set(self.excluded_variables)
+        model_variables = list(model_variables)
+        self.check_id_list(model_variables)
+        LOGGER.info(model_variables)
         # TODO: utilize weak pca variances later on in fitting.
-        return self.yield_most_important_variables(z_data_df, pca_model_inv), list(model_variables)
+        return self.yield_most_important_variables(z_data_df, pca_model_inv), model_variables
