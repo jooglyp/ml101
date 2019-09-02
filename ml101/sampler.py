@@ -71,6 +71,16 @@ class DataPreparer:
         utils.print_delimiter()
         LOGGER.info(self.y_rnn_resampled)
 
+    def construct_new_covariates_list(self, remaining_covariates_size: int, remaining_covariates: list) -> list:
+        new_covariates = []
+        secure_random = random.SystemRandom()
+        if remaining_covariates_size > 0:
+            new_size = random.randint(1, remaining_covariates_size)
+            for i in range(new_size):
+                pick = secure_random.choice(remaining_covariates)
+                new_covariates.append(pick)
+        return new_covariates
+
     def randomize_top_covariates(self, pca_importance: pandas.DataFrame, model_covariates: list):
         if pca_importance is not None:
             utils.print_delimiter()
@@ -81,7 +91,9 @@ class DataPreparer:
             LOGGER.info(model_covariates)
             remaining_covariates = [cov for cov in model_covariates if cov not in base_covariates]
             LOGGER.info(remaining_covariates)
-            raise
+            remaining_covariates_size = len(remaining_covariates)
+            new_covariates = self.construct_new_covariates_list(remaining_covariates_size, remaining_covariates)
+            self.model_covariates = base_covariates + new_covariates
         else:
             return self.model_covariates
 
