@@ -232,7 +232,7 @@ class ApplyPCA(CleanData):
         return self._concatenate_dataframes(dataframes)
 
     @staticmethod
-    def yield_top_third_covariates_by_component(component: numpy.ndarray) -> typing.Tuple[list, float]:
+    def yield_two_third_covariates_by_component(component: numpy.ndarray) -> typing.Tuple[list, float]:
         """
 
         Args:
@@ -241,7 +241,7 @@ class ApplyPCA(CleanData):
         Returns: list containing indexes of top 1/3 features according to explained variances.
 
         """
-        target_number_indexes = (component.size // 3)
+        target_number_indexes = round(component.size * (2/3))
 
         abs_components = numpy.array([abs(covariate) for covariate in component])
 
@@ -288,7 +288,7 @@ class ApplyPCA(CleanData):
 
         """
         utils.print_delimiter()
-        list_top_third_variances = [self.yield_top_third_covariates_by_component(component)
+        list_top_third_variances = [self.yield_two_third_covariates_by_component(component)
                                     for component in inverse_pca_model]
         LOGGER.info(list_top_third_variances)
 

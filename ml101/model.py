@@ -170,7 +170,8 @@ class ParameterOptimizer(Evaluators):
         dataset = sampler.DataPreparer()
         dataset.clientside_pca(self.mlmodel.original_Xdf)
         dataset.sample(self.mlmodel.original_yarray, neighbors=grid_neighbors, sample_proportion=grid_sample_proportion,
-                       pca_importance=important_covariates, model_covariates=last_model_covariates)
+                       pca_importance=important_covariates, model_covariates=last_model_covariates,
+                       pca_proportion=0.9)
         mlmodel = ML101Model(dataset.x_rnn_resampled, dataset.y_rnn_resampled,
                              dataset.X.columns, 'is_bad', dataset.important_covariates,
                              dataset.model_covariates, self.mlmodel.original_Xdf, self.mlmodel.original_yarray)

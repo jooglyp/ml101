@@ -68,21 +68,22 @@ class DataPreparer:
         utils.print_delimiter()
         LOGGER.info(self.y_rnn_resampled)
 
-    def construct_new_covariates_list(self, remaining_covariates_size: int, remaining_covariates: list) -> list:
+    def construct_new_covariates_list(self, remaining_covariates_size: int, remaining_covariates: list,
+                                      pca_proportion: float) -> list:
         new_covariates = []
         secure_random = random.SystemRandom()
         if remaining_covariates_size > 0:
-            new_size = random.randint(1, remaining_covariates_size)
+            new_size = round(pca_proportion * remaining_covariates_size)
             for i in range(new_size):
                 try:
                     pick = secure_random.choice(remaining_covariates)
                     new_covariates.append(pick)
-                    remaining_covariates = remaining_covariates.remove(pick)
+                    remaining_covariates = list(remaining_covariates).remove(pick)
                 except TypeError:
                     break
         return new_covariates
 
-    def randomize_top_covariates(self, pca_importance: pandas.DataFrame, model_covariates: list):
+    def randomize_top_covariates(self, pca_importance: pandas.DataFrame, model_covariates: list, pca_proportion: float):
         if pca_importance is not None:
             utils.print_delimiter()
             LOGGER.info("Building a Random Top Covariates Filter")
@@ -93,19 +94,33 @@ class DataPreparer:
             remaining_covariates = [cov for cov in model_covariates if cov not in base_covariates]
             LOGGER.info(remaining_covariates)
             remaining_covariates_size = len(remaining_covariates)
-            new_covariates = self.construct_new_covariates_list(remaining_covariates_size, remaining_covariates)
+            new_covariates = self.construct_new_covariates_list(remaining_covariates_size, remaining_covariates,
+                                                                pca_proportion)
             LOGGER.info(new_covariates)
-            self.model_covariates = list(base_covariates) + list(new_covariates)
+            new_base_covariates = self.construct_new_covariates_list(len(base_covariates), base_covariates,
+                                                                     pca_proportion)
+            self.model_covariates = list(new_base_covariates) + list(new_covariates)
             LOGGER.info(self.model_covariates)
             return self.model_covariates
         else:
             return self.model_covariates
 
     def sample(self, y: numpy.ndarray = None, X: pandas.DataFrame = None, pca_importance: pandas.DataFrame = None,
-               model_covariates: list = None, neighbors=2, sample_proportion=0.9, assignment=False):
+               model_covariates: list = None, neighbors=2, sample_proportion=0.9, pca_proportion=0.95,
+               assignment=False):
         """
         self.model_covariates are always a list of the X's.
-        Returns: Resampled dataset ready for model fitting.
+        Args:
+            y: numpy array of dependent variables.
+            X: pandas dataframe of covariates.
+            pca_importance: pandas dataframe of variables ranked by importance according to pca.
+            model_covariates: covariates to use in sampling.
+            neighbors: neighbors to use in rnn undersampling.
+            sample_proportion: sample proportion to use in random undersampling.
+            pca_proportion: subset of top 2/3 pca variables to use in a second subsetting of pca variables.
+            assignment: is assignment or clientside sampling operation.
+
+        Returns: Returns: Resampled dataset ready for model fitting.
 
         """
         # TODO: unit test to ensure X and y data are the same length
@@ -117,7 +132,7 @@ class DataPreparer:
             LOGGER.info(len(y))
             self.resampling(neighbors, sample_proportion)
         else:
-            self.model_covariates = self.randomize_top_covariates(pca_importance, model_covariates)
+            self.model_covariates = self.randomize_top_covariates(pca_importance, model_covariates, pca_proportion)
             X, y = self.prepare_data_for_sampling(self.model_covariates, y)
             utils.print_delimiter()
             LOGGER.info(len(X))
