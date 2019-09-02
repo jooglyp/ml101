@@ -26,8 +26,8 @@ def main():
         raw_data = pandas.read_csv(fileobj)
         X = raw_data[raw_data.columns.difference(['is_bad'])]
         y = numpy.array(raw_data[['is_bad']])
-        dataset.clientside_pca(X, category_limit=30)
-    dataset.sample(y=y, neighbors=2, sample_proportion=0.3)
+        dataset.clientside_pca(X, category_limit=50)
+    dataset.sample(y=y, neighbors=2, sample_proportion=0.3, pca_components=4)
 
     #---#
     LOGGER.info(dataset.x_rnn_resampled)

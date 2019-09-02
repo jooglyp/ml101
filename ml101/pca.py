@@ -347,6 +347,8 @@ class ApplyPCA(CleanData):
             return model_vars.remove('Id')
         elif 'id' in model_vars:
             return model_vars.remove('id')
+        elif 'index' in model_vars:
+            return model_vars.remove('index')
         else:
             return model_vars
 
@@ -359,23 +361,24 @@ class ApplyPCA(CleanData):
             adjusted_df = df.drop(['id'], axis=1)
             LOGGER.info(adjusted_df)
             return adjusted_df
+        elif 'index' in df.columns:
+            adjusted_df = df.drop(['index'], axis=1)
+            LOGGER.info(adjusted_df)
+            return adjusted_df
         else:
             return df
 
-    def apply_pca(self, df: pandas.DataFrame, excluded_variables: list, assignment=False) -> \
-            typing.Tuple[pandas.DataFrame, list]:
+    def _coerce_full_dataframe(self, df: pandas.DataFrame, excluded_variables: list, assignment=False):
         """
-        Identify non-numerical covariates and numerical covariates and apply pca.
-
+        Helper function for apply_pca()
         Args:
             df: pandas dataframe that is ready for pca (if assignment=True, X and y are considered concatenated).
             excluded_variables: if autorestriction, these are categoricals of form ['X', 'Z']. Otherwise preset.
             assignment: if True, do not assume dataframe contains X and y together.
 
-        Returns: pandas dataframe of most important variables
+        Returns: dataframe with mar adjustments and all categories exceeding dimensional limits.
 
         """
-
         if assignment:
             df = df.drop(['is_bad'], axis=1)
             df = df.drop(excluded_variables, axis=1)  # drop variables that will not covary much due to MAR
@@ -391,12 +394,31 @@ class ApplyPCA(CleanData):
             # LOGGER.info(self.excluded_variables)
         LOGGER.info(df.columns)
         df.dropna(inplace=True)  # drop rows that contain nan across any covariates
+        return df
 
+    def apply_pca(self, df: pandas.DataFrame, excluded_variables: list, assignment=False) -> \
+            typing.Tuple[pandas.DataFrame, list]:
+        """
+        Identify non-numerical covariates and numerical covariates and apply pca.
+
+        Args:
+            df: pandas dataframe that is ready for pca (if assignment=True, X and y are considered concatenated).
+            excluded_variables: if autorestriction, these are categoricals of form ['X', 'Z']. Otherwise preset.
+            assignment: if True, do not assume dataframe contains X and y together.
+
+        Returns: pandas dataframe of most important variables
+
+        """
+        df = self._coerce_full_dataframe(df, excluded_variables, assignment=False)
         # PCA Transformation:
         z_scaler = StandardScaler()
         z_data = z_scaler.fit_transform(df)
         z_data_df = pandas.DataFrame(z_data, columns=df.columns)
-        pca = PCA(n_components=4)
+        if len(z_data_df.columns) < 4:
+            pca_components = round(0.5 * len(z_data_df.columns))  # ensure that data reduction is possible.
+            pca = PCA(n_components=pca_components)
+        else:
+            pca = PCA(n_components=4)
         pca_model = pca.fit(z_data)
         pca_model_inv = pca_model.inverse_transform(numpy.eye(4))
         LOGGER.info(pca_model_inv)

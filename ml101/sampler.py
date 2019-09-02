@@ -8,6 +8,8 @@ import copy
 import numpy
 import pandas
 from imblearn.under_sampling import RepeatedEditedNearestNeighbours, RandomUnderSampler
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
 
 from . import utils
 from . import pca
@@ -56,14 +58,43 @@ class DataPreparer:
         self.important_covariates, self.model_covariates = pca_application.apply_pca(
             self.cleaned_data, exclude_variables, assignment=True)  # cleaned_data contains X and y here.
 
-    def resampling(self, neighbors: int, sample_proportion: float):
-        self.x_random_resampled, self.y_random_resampled = self.random_undersampling(self.X, self.y, sample_proportion)
+    def secondary_pca(self, X: pandas.DataFrame, pca_components: int = 4) -> pandas.DataFrame:
+        """
+        Second round of PCA for strictly creating components to use in model fitting.
+        Args:
+            X: explicit declaration of covariates matrix (containing no Id field)
+
+        Returns: PCA transformation of original cleaned X dataframe.
+
+        """
+        # PCA Transformation:
+        z_scaler = StandardScaler()
+        z_data = z_scaler.fit_transform(X)
+        z_data_df = pandas.DataFrame(z_data, columns=X.columns)
+        pca = PCA(n_components=pca_components)
+        component_lables = ["component_" + str(i) for i in range(pca_components)]
+        pca_model = pca.fit(z_data)
+        pca_ndarray = pca_model.transform(z_data)
+        XPCA_df = pandas.DataFrame(pca_ndarray, columns=component_lables)
+        utils.print_delimiter()
+        LOGGER.info(XPCA_df)
+        return XPCA_df
+
+    def resampling(self, neighbors: int, sample_proportion: float, pca_components: int):
+        """Take PCA a second time and balance the sample according to proportion of y labels w.r.t. component X's."""
+        LOGGER.info(self.X)
+        if len(self.X.columns) < pca_components:
+            pca_components = round(0.5 * len(self.X.columns))  # ensure that data reduction is possible.
+        XPCA_df = self.secondary_pca(self.X, pca_components=pca_components)
+        # Note that self.X and self.y are untouched but are passed to model fitting for recursive fitting.
+
+        self.x_random_resampled, self.y_random_resampled = self.random_undersampling(XPCA_df, self.y, sample_proportion)
         utils.print_delimiter()
         LOGGER.info(self.x_random_resampled)
         utils.print_delimiter()
         LOGGER.info(self.y_random_resampled)
 
-        self.x_rnn_resampled, self.y_rnn_resampled = self.rnn_undersampling(self.X, self.y, neighbors)
+        self.x_rnn_resampled, self.y_rnn_resampled = self.rnn_undersampling(XPCA_df, self.y, neighbors)
         utils.print_delimiter()
         LOGGER.info(self.x_rnn_resampled)
         utils.print_delimiter()
@@ -73,15 +104,21 @@ class DataPreparer:
                                       pca_proportion: float) -> list:
         new_covariates = []
         secure_random = random.SystemRandom()
-        if remaining_covariates_size > 0:
+        LOGGER.info(pca_proportion)
+        LOGGER.info(remaining_covariates_size)
+        LOGGER.info(round(pca_proportion * remaining_covariates_size))
+        LOGGER.info(remaining_covariates)
+        if int(remaining_covariates_size) > 0:
             new_size = round(pca_proportion * remaining_covariates_size)
             for i in range(new_size):
                 try:
-                    pick = secure_random.choice(remaining_covariates)
+                    pick = secure_random.choice(list(remaining_covariates))
                     new_covariates.append(pick)
-                    remaining_covariates = list(remaining_covariates).remove(pick)
+                    list(remaining_covariates).remove(pick)
                 except TypeError:
+                    LOGGER.info("exited covariate randomization")
                     break
+        LOGGER.info(new_covariates)
         return new_covariates
 
     def randomize_top_covariates(self, pca_importance: pandas.DataFrame, model_covariates: list, pca_proportion: float):
@@ -100,24 +137,16 @@ class DataPreparer:
             LOGGER.info(new_covariates)
             new_base_covariates = self.construct_new_covariates_list(len(base_covariates), base_covariates,
                                                                      pca_proportion)
+            LOGGER.info(new_base_covariates)
             self.model_covariates = list(new_base_covariates) + list(new_covariates)
             LOGGER.info(self.model_covariates)
             return self.model_covariates
         else:
             return self.model_covariates
 
-    def secondary_pca(self, X: pandas.DataFrame) -> None:
-        """
-        Second round of PCA for strictly creating components to use in model fitting.
-        Args:
-            X:
-
-        Returns:
-
-        """
     def sample(self, y: numpy.ndarray = None, X: pandas.DataFrame = None, pca_importance: pandas.DataFrame = None,
                model_covariates: list = None, neighbors=2, sample_proportion=0.9, pca_proportion=0.95,
-               assignment=False):
+               pca_components=4, assignment=False):
         """
         self.model_covariates are always a list of the X's.
         Args:
@@ -140,8 +169,7 @@ class DataPreparer:
             LOGGER.info(len(X))
             utils.print_delimiter()
             LOGGER.info(len(y))
-            self.secondary_pca(self.X)
-            self.resampling(neighbors, sample_proportion)
+            self.resampling(neighbors, sample_proportion, pca_components)
         else:
             self.model_covariates = self.randomize_top_covariates(pca_importance, model_covariates, pca_proportion)
             X, y = self.prepare_data_for_sampling(self.model_covariates, y)
@@ -149,8 +177,7 @@ class DataPreparer:
             LOGGER.info(len(X))
             utils.print_delimiter()
             LOGGER.info(len(y))
-            self.secondary_pca(self.X)
-            self.resampling(neighbors, sample_proportion)
+            self.resampling(neighbors, sample_proportion, pca_components)
 
     def split_data_for_sampling(self, covariates: list) -> typing.Tuple[pandas.DataFrame, numpy.ndarray]:
         """
@@ -201,6 +228,10 @@ class DataPreparer:
             return adjusted_df
         elif 'id' in df.columns:
             adjusted_df = df.drop(['id'], axis=1)
+            LOGGER.info(adjusted_df)
+            return adjusted_df
+        elif 'index' in df.columns:
+            adjusted_df = df.drop(['index'], axis=1)
             LOGGER.info(adjusted_df)
             return adjusted_df
         else:

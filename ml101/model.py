@@ -70,7 +70,7 @@ class ML101Model:
     def assignment_fit(self):
         self.kfold_cv()
         optimizer = ParameterOptimizer(self)
-        optimizer.param_tuning(grid_neighbors=2, grid_sample_proportion=0.7, category_limit=20)
+        optimizer.param_tuning(grid_neighbors=2, grid_sample_proportion=0.7, category_limit=50)
 
 
 class Evaluators:
@@ -171,7 +171,7 @@ class ParameterOptimizer(Evaluators):
         dataset.clientside_pca(self.mlmodel.original_Xdf, category_limit=category_limit)
         dataset.sample(self.mlmodel.original_yarray, neighbors=grid_neighbors, sample_proportion=grid_sample_proportion,
                        pca_importance=important_covariates, model_covariates=last_model_covariates,
-                       pca_proportion=0.9)
+                       pca_proportion=0.9, pca_components=4)
         mlmodel = ML101Model(dataset.x_rnn_resampled, dataset.y_rnn_resampled,
                              dataset.X.columns, 'is_bad', dataset.important_covariates,
                              dataset.model_covariates, self.mlmodel.original_Xdf, self.mlmodel.original_yarray)
@@ -207,7 +207,7 @@ class ExecuteML101Model:
         """
         #TODO: calls optimizer to get best xgb_est.
         dataset = sampler.DataPreparer()
-        dataset.clientside_pca(X, category_limit=30)
+        dataset.clientside_pca(X, category_limit=50)
         dataset.sample(y)
         mlmodel = ML101Model(dataset.x_rnn_resampled, dataset.y_rnn_resampled,
                              dataset.X.columns, 'is_bad', dataset.important_covariates,
