@@ -129,7 +129,7 @@ class ApplyPCA(CleanData):
         self.dataset = raw_data
         self.categorical_map = {}  # dictionary of tuples
         self.model_covariates = None
-        self.excluded_variables = None  # subtracted from self.model_covariates in sampler.py
+        self.excluded_variables = []
         self.clientside_covariate_exclusion = []  # list of variables to exclude in clientside run with autorestriction
         self.feature_importance = None  # pandas dataframe of most important features
 
@@ -179,9 +179,7 @@ class ApplyPCA(CleanData):
             if autorestriction:
                 if len(categories) > 10:  # if encoding yields more than 10 binary covariates, skip covariate.
                     self.clientside_covariate_exclusion.append(categorical_covariate)
-                    continue
-                else:
-                    self.categorical_map[categorical_covariate] = (categories, encoded_matrix_df.columns)
+                self.categorical_map[categorical_covariate] = (categories, encoded_matrix_df.columns)
             utils.print_delimiter()
         return encoded_categoricals
 
@@ -196,8 +194,8 @@ class ApplyPCA(CleanData):
         """
         # TODO: unit test that asserts that dataframes are of the same size
         LOGGER.info("Concatenating Dataframes")
-        datas = functools.reduce(lambda left, right: pandas.merge(left, right,
-                                                                  left_index=True, right_index=True, how='outer'), dataframes)
+        datas = functools.reduce(lambda left, right: pandas.merge(left, right, left_index=True, right_index=True,
+                                                                  how='outer'), dataframes)
         LOGGER.info("Final Dataset:")
         self.model_covariates = datas.columns
         return datas
@@ -303,6 +301,40 @@ class ApplyPCA(CleanData):
         self.feature_importance = feature_importance
         return feature_importance
 
+    def smartdrop(self, df: pandas.DataFrame, excluded_variables: list) -> pandas.DataFrame:
+        """
+        Args:
+            df: pandas dataframe of X's that contains categorical encoded variables of the form ['X_1', 'X_2']
+            excluded_variables: list of variables to exclude of the form ['X', 'Z']
+        """
+        excluded = []
+        for column in df.columns:
+            for to_exclude in excluded_variables:
+                if column.startswith(to_exclude):
+                    excluded.append(column)
+                    self.excluded_variables.append(column)
+                    break
+        return df.drop(excluded, axis=1)
+
+    def correct_for_mar(self, df: pandas.DataFrame, threshold: float) -> pandas.DataFrame:
+        """
+
+        Args:
+            df: pandas dataframe that will have columns dropped.
+            threshold: percentage of nan considered to constitute a covariate with data missing at ranodom (MAR).
+
+        Returns: pandas dataframe.
+
+        """
+        excluded = []
+        for col in df.columns:
+            vector = df[col]  # pandas.Series
+            if (vector.isna().sum() / len(vector)) > threshold:
+                excluded.append(col)
+                self.excluded_variables.append(col)
+        LOGGER.info(excluded)
+        return df.drop(excluded, axis=1)
+
     def apply_pca(self, df: pandas.DataFrame, excluded_variables: list, assignment=False) -> \
             typing.Tuple[pandas.DataFrame, list]:
         """
@@ -310,16 +342,21 @@ class ApplyPCA(CleanData):
 
         Args:
             df: pandas dataframe that is ready for pca (if assignment=True, X and y are considered concatenated).
-            excluded_variables: variables that should be excluded from pca due to observations missing at random (MAR).
+            excluded_variables: if autorestriction, these are categoricals of form ['X', 'Z']. Otherwise preset.
             assignment: if True, do not assume dataframe contains X and y together.
 
         Returns: pandas dataframe of most important variables
 
         """
-        df = df.drop(excluded_variables, axis=1)  # drop variables that will not covary much due to MAR
+
         if assignment:
             df = df.drop(['is_bad'], axis=1)
-        self.excluded_variables = excluded_variables
+            df = df.drop(excluded_variables, axis=1)  # drop variables that will not covary much due to MAR
+            self.excluded_variables = excluded_variables
+        else:
+            df = self.smartdrop(df, excluded_variables)
+            df = self.correct_for_mar(df, 0.5)  # drop variables that will not covary much due to MAR
+
         df.dropna(inplace=True)  # drop rows that contain nan across any covariates
 
         # PCA Transformation:
