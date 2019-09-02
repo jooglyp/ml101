@@ -1,32 +1,49 @@
 """Model: Extreme Gradient Boosting Regressor wrapped in a K-Fold crossvalidator."""
 
-import logging
-from statistics import mean
 import itertools
+import logging
 import typing
+from statistics import mean
 
-import pandas
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.externals import joblib
-from sklearn.metrics import auc, accuracy_score, confusion_matrix, mean_squared_error, f1_score, precision_score
-from sklearn.metrics import recall_score, average_precision_score, normalized_mutual_info_score, log_loss
-from dask.distributed import Client
 import dask
 import dask.array as da
-from dask_ml.xgboost import XGBClassifier
-from dask_ml.model_selection import KFold
 import numpy
+import pandas
+from dask.distributed import Client
+from dask_ml.model_selection import KFold
+from dask_ml.xgboost import XGBClassifier
+from sklearn.externals import joblib
+from sklearn.metrics import (
+    accuracy_score,
+    auc,
+    average_precision_score,
+    confusion_matrix,
+    f1_score,
+    log_loss,
+    mean_squared_error,
+    normalized_mutual_info_score,
+    precision_score,
+    recall_score,
+)
+from sklearn.preprocessing import MinMaxScaler
 
-from . import utils, sampler
+from . import sampler
 
 LOGGER = logging.getLogger(__name__)
 CLIENT = dask.distributed.Client()
 
 
 class ML101Model:
-    def __init__(self, X: numpy.ndarray, y: numpy.ndarray, ylabel: str,
-                 important_covariates: pandas.DataFrame, model_covariates: list,
-                 original_Xdf: pandas.DataFrame, original_yarray: numpy.ndarray):
+    def __init__(
+        self,
+        X: numpy.ndarray,
+        y: numpy.ndarray,
+        ylabel: str,
+        important_covariates: pandas.DataFrame,
+        model_covariates: list,
+        original_Xdf: pandas.DataFrame,
+        original_yarray: numpy.ndarray,
+    ):
         self.X = da.from_array(X, chunks=X.shape)
         self.y = da.from_array(y, chunks=y.shape)
         self.ylabel = ylabel
@@ -36,7 +53,9 @@ class ML101Model:
         self.original_yarray = original_yarray
         self.ytest_iterations = []  # list to store kfold crossvalidation results
         self.ypred_iterations = []  # list to store kfold crossvalidation results
-        self.predicted_probability_iterations = []  # list to store predicted probabilities
+        self.predicted_probability_iterations = (
+            []
+        )  # list to store predicted probabilities
         self.predictions = []  # list to store label predictions
         LOGGER.info(self.X)
         LOGGER.info(self.y)
@@ -52,19 +71,30 @@ class ML101Model:
         Returns: fitted values and test values to be used for model optimization.
 
         """
-        with joblib.parallel_backend('dask'):
-            self.xgb_est = XGBClassifier(max_depth=5, subsample=0.7, scale_pos_weight=2,
-                                    num_class=1, learning_rate=0.05)
+        with joblib.parallel_backend("dask"):
+            self.xgb_est = XGBClassifier(
+                max_depth=5,
+                subsample=0.7,
+                scale_pos_weight=2,
+                num_class=1,
+                learning_rate=0.05,
+            )
             cv = KFold(n_splits=8, random_state=24, shuffle=True)
             for train_index, test_index in cv.split(self.X):
-                X_train, X_test, y_train, y_test = self.X[train_index], self.X[test_index], \
-                                                   self.y[train_index], self.y[test_index]
+                X_train, X_test, y_train, y_test = (
+                    self.X[train_index],
+                    self.X[test_index],
+                    self.y[train_index],
+                    self.y[test_index],
+                )
                 self.xgb_est.fit(X_train, y_train)
                 y_pred = self.xgb_est.predict(X_test)
                 self.predictions.append(y_pred)
                 self.ypred_iterations.append(y_pred)
                 self.ytest_iterations.append(y_test)
-                self.predicted_probability_iterations.append(self.xgb_est.predict_proba(X_test))
+                self.predicted_probability_iterations.append(
+                    self.xgb_est.predict_proba(X_test)
+                )
 
     def predict(self, X: pandas.DataFrame):
         self.xgb_est.predict(X)
@@ -72,6 +102,7 @@ class ML101Model:
 
 class Evaluators:
     """Evaluates model accuracy using a confusion matrix, precision/recall (f-1 score), and log-loss."""
+
     def __init__(self, mlmodel: ML101Model):
         self.mlmodel = mlmodel
         self.ytest_iterations = self.mlmodel.ytest_iterations
@@ -89,7 +120,6 @@ class Evaluators:
 
             mse = mean_squared_error(ytest, ypred)
             self.rmses.append(numpy.sqrt(mse))
-        utils.print_delimiter()
         LOGGER.info(self.rmses)
         return mean(self.rmses)
 
@@ -101,7 +131,6 @@ class Evaluators:
 
             f1score = f1_score(ytest, ypred)
             self.f1scores.append(f1score)
-        utils.print_delimiter()
         LOGGER.info(self.f1scores)
         return mean(self.f1scores)
 
@@ -124,10 +153,14 @@ class Evaluators:
             tn, fp, fn, tp = confusion_matrix(ypred, ytest).ravel()
             precision = tp / (tp + fp)
             recall = tp / (tp + fn)
-            LOGGER.info('Accuracy: {}, Precision: {}, Recall: {}'.format(round(insample_accuracy, 2),
-                                                                         precision, recall))
-            self.confusion_matrices.append(pandas.DataFrame(confusion_matrix(ypred, ytest)))
-            utils.print_delimiter()
+            LOGGER.info(
+                "Accuracy: {}, Precision: {}, Recall: {}".format(
+                    round(insample_accuracy, 2), precision, recall
+                )
+            )
+            self.confusion_matrices.append(
+                pandas.DataFrame(confusion_matrix(ypred, ytest))
+            )
             # LOGGER.info(self.confusion_matrices)
 
     def compute_conditional_log_loss(self) -> float:
@@ -141,18 +174,24 @@ class Evaluators:
 
             logloss = log_loss(ytest, ypred, normalize=True)
             self.loglosses.append(logloss)
-        utils.print_delimiter()
         LOGGER.info(self.loglosses)
         return mean(self.loglosses)
 
 
 class ParameterOptimizer(Evaluators):
     """Evaluates model kfold crossvalidations to obtain optimized model parameters for best fit."""
-    #TODO: use grid search using scores as input, then adjusting pca and sampling params, and getting new scores output.
-    #TODO: use normalized mutual information score to evaluate how good the sampling was. Adjust sampling accordingly.
 
-    def tune(self, grid_neighbors: int, grid_sample_proportion: float, category_limit: int,
-             pca_proportion: float, pca_components: int):
+    # TODO: use grid search using scores as input, then adjusting pca and sampling params, and getting new scores output.
+    # TODO: use normalized mutual information score to evaluate how good the sampling was. Adjust sampling accordingly.
+
+    def tune(
+        self,
+        grid_neighbors: int,
+        grid_sample_proportion: float,
+        category_limit: int,
+        pca_proportion: float,
+        pca_components: int,
+    ):
         self.compute_confusion_matrices()
         avg_rmse = self.compute_rmse()
         avg_logloss = self.compute_conditional_log_loss()
@@ -162,12 +201,24 @@ class ParameterOptimizer(Evaluators):
         last_model_covariates = self.mlmodel.model_covariates
         dataset = sampler.DataPreparer()
         dataset.clientside_pca(self.mlmodel.original_Xdf, category_limit=category_limit)
-        dataset.sample(self.mlmodel.original_yarray, neighbors=grid_neighbors, sample_proportion=grid_sample_proportion,
-                       pca_importance=important_covariates, model_covariates=last_model_covariates,
-                       pca_proportion=pca_proportion, pca_components=pca_components)
-        mlmodel = self.mlmodel.__class__(dataset.x_rnn_resampled, dataset.y_rnn_resampled,
-                             dataset.X.columns, dataset.important_covariates,
-                             dataset.model_covariates, self.mlmodel.original_Xdf, self.mlmodel.original_yarray)
+        dataset.sample(
+            self.mlmodel.original_yarray,
+            neighbors=grid_neighbors,
+            sample_proportion=grid_sample_proportion,
+            pca_importance=important_covariates,
+            model_covariates=last_model_covariates,
+            pca_proportion=pca_proportion,
+            pca_components=pca_components,
+        )
+        mlmodel = self.mlmodel.__class__(
+            dataset.x_rnn_resampled,
+            dataset.y_rnn_resampled,
+            dataset.X.columns,
+            dataset.important_covariates,
+            dataset.model_covariates,
+            self.mlmodel.original_Xdf,
+            self.mlmodel.original_yarray,
+        )
         mlmodel.kfold_cv()
         optimizer = self.__class__(mlmodel)
         optimizer.compute_confusion_matrices()
@@ -175,15 +226,17 @@ class ParameterOptimizer(Evaluators):
         average_log_loss = optimizer.compute_conditional_log_loss()
         average_f1 = optimizer.compute_f1score()
 
-        utils.print_delimiter()
         LOGGER.info("Change in Average RMSE: {}".format(average_rmse - avg_rmse))
-        LOGGER.info("Change in Average Log Loss: {}".format(average_log_loss - avg_logloss))
+        LOGGER.info(
+            "Change in Average Log Loss: {}".format(average_log_loss - avg_logloss)
+        )
         LOGGER.info("Change in Average F1 Score: {}".format(average_f1 - avg_f1score))
 
         return self.calculate_composite_loss(average_log_loss, average_rmse, average_f1)
 
-    def calculate_composite_loss(self, average_log_loss: float, average_rmse: float,
-                                  average_f1: float) -> float:
+    def calculate_composite_loss(
+        self, average_log_loss: float, average_rmse: float, average_f1: float
+    ) -> float:
         index_ll_rmse = average_log_loss * (1 + average_rmse)
         index_f1 = 1 - average_f1
         composite = index_ll_rmse * (1 + index_f1)
@@ -208,54 +261,48 @@ class XGBoostModel:
         kwargs = self.tune_parameters(X, y)
 
         dataset = sampler.DataPreparer()
-        dataset.clientside_pca(X, category_limit=kwargs.pop('category_limit'))
+        dataset.clientside_pca(X, category_limit=kwargs.pop("category_limit"))
         dataset.sample(y)
 
-        kwargs['X'] = X
-        kwargs['y'] = y
+        kwargs["X"] = X
+        kwargs["y"] = y
         self.model = ML101Model(**kwargs)
         self.model.kfold_cv()
 
-        '''
-        #TODO: calls optimizer to get best xgb_est.
-        dataset = sampler.DataPreparer()
-        dataset.clientside_pca(X, category_limit=50)
-        dataset.sample(y)
-        mlmodel = ML101Model(dataset.x_rnn_resampled, dataset.y_rnn_resampled,
-                             dataset.X.columns, dataset.important_covariates,
-                             dataset.model_covariates, X, y)
-        mlmodel.kfold_cv()
-        optimizer = ParameterOptimizer(mlmodel)
-        '''
-
     def predict(self, X: pandas.DataFrame) -> pandas.DataFrame:
-        #TODO: uses best xgb_est and X TESTSET to obtain out-of-sample predictions.
+        # TODO: uses best xgb_est and X TESTSET to obtain out-of-sample predictions.
         return self.model.predict(X)  # TODO: implement.
 
     def predict_proba(self, X: pandas.DataFrame) -> pandas.DataFrame:
-        #TODO: predicts label probabilities of predicted y using X TESTSET.
+        # TODO: predicts label probabilities of predicted y using X TESTSET.
         return None
 
     def evaluate(self, X: pandas.DataFrame, y: numpy.ndarray) -> dict:
         self.fit(X, y)
-        return self.model.evaludate()  # TODO: implement
+        return self.model.evaluate()  # TODO: implement
 
     def tune_parameters(self, X: pandas.DataFrame, y: numpy.ndarray) -> dict:
         param_grid = [
-            ('grid_neighbors', [2, 3, 4]),
-            ('grid_sample_proportion', [0.9, 0.7, 0.5]),
-            ('category_limit', [10, 100, 300]),
-            ('pca_proportion', [0.95, 0.9, 0.8]),
-            ('pca_components', [4, 5, 6])
+            ("grid_neighbors", [2, 3, 4]),
+            ("grid_sample_proportion", [0.9, 0.7, 0.5]),
+            ("category_limit", [10, 100, 300]),
+            ("pca_proportion", [0.95, 0.9, 0.8]),
+            ("pca_components", [4, 5, 6]),
         ]
 
         dataset = sampler.DataPreparer()
         dataset.clientside_pca(X, category_limit=50)
         dataset.sample(y)
 
-        original_model = ML101Model(dataset.x_rnn_resampled, dataset.y_rnn_resampled,
-                             dataset.X.columns, dataset.important_covariates,
-                             dataset.model_covariates, X, y)
+        original_model = ML101Model(
+            dataset.x_rnn_resampled,
+            dataset.y_rnn_resampled,
+            dataset.X.columns,
+            dataset.important_covariates,
+            dataset.model_covariates,
+            X,
+            y,
+        )
         original_model.kfold_cv()
 
         optimizer = ParameterOptimizer(original_model)
