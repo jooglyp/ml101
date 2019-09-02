@@ -70,7 +70,7 @@ class ML101Model:
     def assignment_fit(self):
         self.kfold_cv()
         optimizer = ParameterOptimizer(self)
-        optimizer.adjust_with_pca(grid_neighbors=2, grid_sample_proportion=0.7)
+        optimizer.param_tuning(grid_neighbors=2, grid_sample_proportion=0.7)
 
 
 class Evaluators:
@@ -159,7 +159,7 @@ class ParameterOptimizer(Evaluators):
         self.mlmodel = mlmodel
         self.iterate_dataset = None
 
-    def adjust_with_pca(self, grid_neighbors: int, grid_sample_proportion: float):
+    def param_tuning(self, grid_neighbors: int, grid_sample_proportion: float):
         self.compute_confusion_matrices()
         avg_rmse = self.compute_rmse()
         avg_logloss = self.compute_conditional_log_loss()
