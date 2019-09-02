@@ -315,7 +315,6 @@ class ApplyPCA(CleanData):
                     excluded.append(column)
                     self.excluded_variables.append(column)
                     break
-        LOGGER.info(self.excluded_variables)
         adjusted_df = df.drop(excluded, axis=1)
         LOGGER.info(adjusted_df)
         return adjusted_df
@@ -337,7 +336,6 @@ class ApplyPCA(CleanData):
             if (vector.isna().sum() / len(vector)) > threshold:
                 excluded.append(col)
                 self.excluded_variables.append(col)
-        LOGGER.info(self.excluded_variables)
         adjusted_df = df.drop(excluded, axis=1)
         LOGGER.info(adjusted_df)
         return adjusted_df

@@ -1,6 +1,7 @@
 """Model: Extreme Gradient Boosting Regressor wrapped in a K-Fold crossvalidator."""
 
 import logging
+from statistics import mean
 
 import pandas
 from sklearn.preprocessing import MinMaxScaler
@@ -9,7 +10,6 @@ from sklearn.metrics import auc, accuracy_score, confusion_matrix, mean_squared_
 from sklearn.metrics import recall_score, average_precision_score, normalized_mutual_info_score, log_loss
 from dask.distributed import Client
 import dask
-import dask.dataframe as dd
 import dask.array as da
 from dask_ml.xgboost import XGBClassifier
 from dask_ml.model_selection import KFold
@@ -55,7 +55,7 @@ class ML101Model:
         """
         with joblib.parallel_backend('dask'):
             xgb_est = XGBClassifier()
-            cv = KFold(n_splits=10, random_state=84, shuffle=True)
+            cv = KFold(n_splits=8, random_state=24, shuffle=True)
             for train_index, test_index in cv.split(self.X):
                 X_train, X_test, y_train, y_test = self.X[train_index], self.X[test_index], \
                                                    self.y[train_index], self.y[test_index]
@@ -65,12 +65,11 @@ class ML101Model:
                 self.ypred_iterations.append(y_pred)
                 self.ytest_iterations.append(y_test)
                 self.predicted_probability_iterations.append(xgb_est.predict_proba(X_test))
-                LOGGER.info(self.predictions)
 
     def assignment_fit(self):
         self.kfold_cv()
         optimizer = ParameterOptimizer(self)
-        optimizer.adjust_with_pca()
+        optimizer.adjust_with_pca(grid_neighbors=2, grid_sample_proportion=0.7)
 
 
 class Evaluators:
@@ -84,7 +83,7 @@ class Evaluators:
         self.rmses = []
         self.f1scores = []
 
-    def compute_rmse(self):
+    def compute_rmse(self) -> float:
         """RMSE Evaluation. Lower is better."""
         for ytest, ypred in zip(self.ytest_iterations, self.ypred_iterations):
             ytest = ytest.compute()
@@ -94,8 +93,9 @@ class Evaluators:
             self.rmses.append(numpy.sqrt(mse))
         utils.print_delimiter()
         LOGGER.info(self.rmses)
+        return mean(self.rmses)
 
-    def compute_f1score(self):
+    def compute_f1score(self) -> float:
         """RMSE Evaluation. Lower is better."""
         for ytest, ypred in zip(self.ytest_iterations, self.ypred_iterations):
             ytest = ytest.compute()
@@ -105,6 +105,7 @@ class Evaluators:
             self.f1scores.append(f1score)
         utils.print_delimiter()
         LOGGER.info(self.f1scores)
+        return mean(self.f1scores)
 
     def compute_confusion_matrices(self):
         """
@@ -131,7 +132,7 @@ class Evaluators:
             utils.print_delimiter()
             # LOGGER.info(self.confusion_matrices)
 
-    def compute_conditional_log_loss(self):
+    def compute_conditional_log_loss(self) -> float:
         """
         LogLoss Evaluation. Lower is better.
         binary-logistic' uses -(y*log(y_pred) + (y-1)*(log(1-y_pred))
@@ -144,6 +145,7 @@ class Evaluators:
             self.loglosses.append(logloss)
         utils.print_delimiter()
         LOGGER.info(self.loglosses)
+        return mean(self.loglosses)
 
 
 class ParameterOptimizer(Evaluators):
@@ -154,25 +156,35 @@ class ParameterOptimizer(Evaluators):
     def __init__(self, mlmodel: ML101Model):
         super().__init__(mlmodel)
         self.mlmodel = mlmodel
+        self.iterate_dataset = None
 
-    def drop_if_not_high_pca_variance(self, important_covariates: pandas.DataFrame, last_model_covariates: list):
-        dataset = sampler.DataPreparer()
-        dataset.clientside_pca(self.mlmodel.original_Xdf)
-        dataset.sample(self.mlmodel.original_yarray,
-                       pca_importance=important_covariates, model_covariates=last_model_covariates)
+    def adjust_with_pca(self, grid_neighbors: int, grid_sample_proportion: float):
+        self.compute_confusion_matrices()
+        avg_rmse = self.compute_rmse()
+        avg_logloss = self.compute_conditional_log_loss()
+        avg_f1score = self.compute_f1score()
 
-    def adjust_with_pca(self):
         important_covariates = self.mlmodel.important_covariates
         last_model_covariates = self.mlmodel.model_covariates
-        new_exclusion_covariates = self.drop_if_not_high_pca_variance(important_covariates, last_model_covariates)
-
-        return None
-
-    def adjust_with_scores(self):
-        self.compute_confusion_matrices()
-        self.compute_rmse()
-        self.compute_conditional_log_loss()
-        self.compute_f1score()
+        dataset = sampler.DataPreparer()
+        dataset.clientside_pca(self.mlmodel.original_Xdf)
+        dataset.sample(self.mlmodel.original_yarray, neighbors=grid_neighbors, sample_proportion=grid_sample_proportion,
+                       pca_importance=important_covariates, model_covariates=last_model_covariates)
+        mlmodel = ML101Model(dataset.x_rnn_resampled, dataset.y_rnn_resampled,
+                             dataset.X.columns, 'is_bad', dataset.important_covariates,
+                             dataset.model_covariates, self.mlmodel.original_Xdf, self.mlmodel.original_yarray)
+        mlmodel.kfold_cv()
+        optimizer = ParameterOptimizer(mlmodel)
+        optimizer.compute_confusion_matrices()
+        new_avg_rmse = optimizer.compute_rmse()
+        new_avg_logloss = optimizer.compute_conditional_log_loss()
+        new_avg_f1score = optimizer.compute_f1score()
+        LOGGER.info(avg_f1score)
+        LOGGER.info(new_avg_f1score)
+        utils.print_delimiter()
+        LOGGER.info("Change in Average RMSE: {}".format(new_avg_rmse - avg_rmse))
+        LOGGER.info("Change in Average Log Loss: {}".format(new_avg_logloss - avg_logloss))
+        LOGGER.info("Change in Average F1 Score: {}".format(new_avg_f1score - avg_f1score))
 
 #=======================================================================================#
 #=======================================================================================#

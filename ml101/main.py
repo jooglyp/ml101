@@ -1,5 +1,4 @@
 """The main entrypoints live here."""
-import json
 import logging
 
 import pandas
@@ -28,7 +27,7 @@ def main():
         X = raw_data[raw_data.columns.difference(['is_bad'])]
         y = numpy.array(raw_data[['is_bad']])
         dataset.clientside_pca(X)
-    dataset.sample(y=y)
+    dataset.sample(y=y, neighbors=2, sample_proportion=0.3)
 
     #---#
     LOGGER.info(dataset.x_rnn_resampled)

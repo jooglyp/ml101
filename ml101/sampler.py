@@ -1,11 +1,8 @@
 from __future__ import annotations
 
 import logging
-import datetime
-import itertools
 import random
 import typing
-from decimal import Decimal
 
 import copy
 import numpy
@@ -58,14 +55,14 @@ class DataPreparer:
         self.important_covariates, self.model_covariates = pca_application.apply_pca(
             self.cleaned_data, exclude_variables, assignment=True)  # cleaned_data contains X and y here.
 
-    def resampling(self):
-        self.x_random_resampled, self.y_random_resampled = self.random_undersampling(self.X, self.y)
+    def resampling(self, neighbors: int, sample_proportion: float):
+        self.x_random_resampled, self.y_random_resampled = self.random_undersampling(self.X, self.y, sample_proportion)
         utils.print_delimiter()
         LOGGER.info(self.x_random_resampled)
         utils.print_delimiter()
         LOGGER.info(self.y_random_resampled)
 
-        self.x_rnn_resampled, self.y_rnn_resampled = self.rnn_undersampling(self.X, self.y)
+        self.x_rnn_resampled, self.y_rnn_resampled = self.rnn_undersampling(self.X, self.y, neighbors)
         utils.print_delimiter()
         LOGGER.info(self.x_rnn_resampled)
         utils.print_delimiter()
@@ -77,8 +74,12 @@ class DataPreparer:
         if remaining_covariates_size > 0:
             new_size = random.randint(1, remaining_covariates_size)
             for i in range(new_size):
-                pick = secure_random.choice(remaining_covariates)
-                new_covariates.append(pick)
+                try:
+                    pick = secure_random.choice(remaining_covariates)
+                    new_covariates.append(pick)
+                    remaining_covariates = remaining_covariates.remove(pick)
+                except TypeError:
+                    break
         return new_covariates
 
     def randomize_top_covariates(self, pca_importance: pandas.DataFrame, model_covariates: list):
@@ -93,12 +94,15 @@ class DataPreparer:
             LOGGER.info(remaining_covariates)
             remaining_covariates_size = len(remaining_covariates)
             new_covariates = self.construct_new_covariates_list(remaining_covariates_size, remaining_covariates)
-            self.model_covariates = base_covariates + new_covariates
+            LOGGER.info(new_covariates)
+            self.model_covariates = list(base_covariates) + list(new_covariates)
+            LOGGER.info(self.model_covariates)
+            return self.model_covariates
         else:
             return self.model_covariates
 
     def sample(self, y: numpy.ndarray = None, X: pandas.DataFrame = None, pca_importance: pandas.DataFrame = None,
-               model_covariates: list = None, assignment=False):
+               model_covariates: list = None, neighbors=2, sample_proportion=0.9, assignment=False):
         """
         self.model_covariates are always a list of the X's.
         Returns: Resampled dataset ready for model fitting.
@@ -111,7 +115,7 @@ class DataPreparer:
             LOGGER.info(len(X))
             utils.print_delimiter()
             LOGGER.info(len(y))
-            self.resampling()
+            self.resampling(neighbors, sample_proportion)
         else:
             self.model_covariates = self.randomize_top_covariates(pca_importance, model_covariates)
             X, y = self.prepare_data_for_sampling(self.model_covariates, y)
@@ -119,7 +123,7 @@ class DataPreparer:
             LOGGER.info(len(X))
             utils.print_delimiter()
             LOGGER.info(len(y))
-            self.resampling()
+            self.resampling(neighbors, sample_proportion)
 
     def split_data_for_sampling(self, covariates: list) -> typing.Tuple[pandas.DataFrame, numpy.ndarray]:
         """
@@ -175,8 +179,8 @@ class DataPreparer:
         else:
             return df
 
-    def rnn_undersampling(self, x: pandas.DataFrame, y: numpy.ndarray) -> typing.Tuple[numpy.ndarray,
-                                                                                 numpy.ndarray]:
+    def rnn_undersampling(self, x: pandas.DataFrame, y: numpy.ndarray,
+                          neighbors: int) -> typing.Tuple[numpy.ndarray, numpy.ndarray]:
         """
         Repeated Edited Nearest Neighbors.
         Args:
@@ -189,7 +193,7 @@ class DataPreparer:
         #TODO: unit test to ensure X and y lengths are the same
         #TODO: unit test to ensure Id is not in x or y
         x = self.check_id(x)
-        rnn_undersampler = RepeatedEditedNearestNeighbours(random_state=82, n_neighbors=4, return_indices=True,
+        rnn_undersampler = RepeatedEditedNearestNeighbours(random_state=82, n_neighbors=neighbors, return_indices=True,
                                                            kind_sel='mode', max_iter=400, ratio='majority')
 
         X_resampled, y_resampled, resampled_idx = rnn_undersampler.fit_sample(copy.deepcopy(x), copy.deepcopy(y))
@@ -199,8 +203,8 @@ class DataPreparer:
         LOGGER.info("RNN undersampling yielded {} number of y_resampled observations".format(len(y_resampled)))
         return X_resampled, y_resampled
 
-    def random_undersampling(self, x: pandas.DataFrame, y: numpy.ndarray) -> typing.Tuple[numpy.ndarray,
-                                                                                    numpy.ndarray]:
+    def random_undersampling(self, x: pandas.DataFrame, y: numpy.ndarray,
+                             sample_proportion: float = 0.8) -> typing.Tuple[numpy.ndarray, numpy.ndarray]:
         """
         Random Undersampling.
         Args:
@@ -213,7 +217,10 @@ class DataPreparer:
         #TODO: unit test to ensure X and y lengths are the same
         #TODO: unit test to ensure Id is not in x or y
         x = self.check_id(x)
-        random_undersampler = RandomUnderSampler(ratio={1: 1000, 0: 8000})
+        LOGGER.info(len(x))
+        target_size = round(sample_proportion * len(x))
+        LOGGER.info(target_size)
+        random_undersampler = RandomUnderSampler(sampling_strategy=sample_proportion)
 
         X_resampled, y_resampled = random_undersampler.fit_sample(copy.deepcopy(x), copy.deepcopy(y).ravel())
         LOGGER.info(X_resampled)
