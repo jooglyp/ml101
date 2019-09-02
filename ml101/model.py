@@ -9,9 +9,11 @@ import dask
 import dask.array as da
 import numpy
 import pandas
+import dask.dataframe as dd
 from dask.distributed import Client
 from dask_ml.model_selection import KFold
 from dask_ml.xgboost import XGBClassifier
+from xgboost import DMatrix
 from sklearn.externals import joblib
 from sklearn.metrics import (
     accuracy_score,
@@ -96,8 +98,13 @@ class ML101Model:
                     self.xgb_est.predict_proba(X_test)
                 )
 
-    def predict(self, X: pandas.DataFrame):
-        self.xgb_est.predict(X)
+    def predict(self, X: pandas.DataFrame) -> numpy.ndarray:
+        return self.xgb_est.predict(X)
+
+    def predict_probability(self, X: pandas.DataFrame) -> numpy.ndarray:
+        numpy_array = numpy.array(X)
+        dask_array = da.from_array(numpy_array, chunks=numpy_array.shape)
+        return self.xgb_est.predict_proba(dask_array).compute()
 
 
 class Evaluators:
@@ -180,8 +187,6 @@ class Evaluators:
 
 class ParameterOptimizer(Evaluators):
     """Evaluates model kfold crossvalidations to obtain optimized model parameters for best fit."""
-
-    # TODO: use grid search using scores as input, then adjusting pca and sampling params, and getting new scores output.
     # TODO: use normalized mutual information score to evaluate how good the sampling was. Adjust sampling accordingly.
 
     def tune(
@@ -242,12 +247,18 @@ class ParameterOptimizer(Evaluators):
         composite = index_ll_rmse * (1 + index_f1)
         return composite
 
+    def evaluate(self) -> dict:
+        """Return {'f1_score': 0.3, 'logloss': 0.7}"""
+        return {'f1_score': self.compute_f1score(), 'logloss': self.compute_conditional_log_loss()}
+
 
 class XGBoostModel:
     def __init__(self):
+        self.original_model: ML101Model = None
         self.model: ML101Model = None
+        self.optimiser: ParameterOptimizer = None
 
-    def fit(self, X: pandas.DataFrame, y: numpy.ndarray):
+    def fit(self, X: pandas.DataFrame, y: numpy.ndarray) -> None:
         """
 
         Args:
@@ -262,24 +273,38 @@ class XGBoostModel:
 
         dataset = sampler.DataPreparer()
         dataset.clientside_pca(X, category_limit=kwargs.pop("category_limit"))
-        dataset.sample(y)
+        dataset.sample(
+            y,
+            neighbors=kwargs.pop("grid_neighbors"),
+            sample_proportion=kwargs.pop("grid_sample_proportion"),
+            pca_importance=self.original_model.important_covariates,
+            model_covariates=self.original_model.model_covariates,
+            pca_proportion=kwargs.pop("pca_proportion"),
+            pca_components=kwargs.pop("pca_components"),
+        )
 
-        kwargs["X"] = X
-        kwargs["y"] = y
-        self.model = ML101Model(**kwargs)
+        self.model = ML101Model(
+            dataset.x_rnn_resampled,
+            dataset.y_rnn_resampled,
+            dataset.X.columns,
+            dataset.important_covariates,
+            dataset.model_covariates,
+            self.original_model.original_Xdf,
+            self.original_model.original_yarray,
+        )
         self.model.kfold_cv()
 
-    def predict(self, X: pandas.DataFrame) -> pandas.DataFrame:
-        # TODO: uses best xgb_est and X TESTSET to obtain out-of-sample predictions.
-        return self.model.predict(X)  # TODO: implement.
+        self.optimiser = ParameterOptimizer(self.model)
 
-    def predict_proba(self, X: pandas.DataFrame) -> pandas.DataFrame:
-        # TODO: predicts label probabilities of predicted y using X TESTSET.
-        return None
+    def predict(self, X: pandas.DataFrame) -> numpy.ndarray:
+        return self.model.predict(X)
+
+    def predict_proba(self, X: pandas.DataFrame) -> numpy.ndarray:
+        return self.model.predict_probability(X)
 
     def evaluate(self, X: pandas.DataFrame, y: numpy.ndarray) -> dict:
         self.fit(X, y)
-        return self.model.evaluate()  # TODO: implement
+        return self.optimiser.evaluate()
 
     def tune_parameters(self, X: pandas.DataFrame, y: numpy.ndarray) -> dict:
         param_grid = [
@@ -290,11 +315,22 @@ class XGBoostModel:
             ("pca_components", [4, 5, 6]),
         ]
 
+        #print(len(list(itertools.product(*[item[1] for item in param_grid]))))
+        #raise
+
+        param_grid = [
+            ("grid_neighbors", [2]),
+            ("grid_sample_proportion", [0.9]),
+            ("category_limit", [10]),
+            ("pca_proportion", [0.95]),
+            ("pca_components", [4]),
+        ]
+
         dataset = sampler.DataPreparer()
         dataset.clientside_pca(X, category_limit=50)
         dataset.sample(y)
 
-        original_model = ML101Model(
+        self.original_model = ML101Model(
             dataset.x_rnn_resampled,
             dataset.y_rnn_resampled,
             dataset.X.columns,
@@ -303,9 +339,9 @@ class XGBoostModel:
             X,
             y,
         )
-        original_model.kfold_cv()
+        self.original_model.kfold_cv()
 
-        optimizer = ParameterOptimizer(original_model)
+        optimizer = ParameterOptimizer(self.original_model)
 
         best_loss = None
         best_parameters = None
@@ -320,4 +356,5 @@ class XGBoostModel:
                 best_parameters = kwargs
                 best_loss = loss
 
+        LOGGER.info('Best parameters: %s', best_parameters)
         return best_parameters
