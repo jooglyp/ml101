@@ -54,7 +54,8 @@ class ML101Model:
 
         """
         with joblib.parallel_backend('dask'):
-            xgb_est = XGBClassifier()
+            xgb_est = XGBClassifier(max_depth=5, subsample=0.7, scale_pos_weight=2,
+                                    num_class=1, learning_rate=0.05)
             cv = KFold(n_splits=8, random_state=24, shuffle=True)
             for train_index, test_index in cv.split(self.X):
                 X_train, X_test, y_train, y_test = self.X[train_index], self.X[test_index], \
