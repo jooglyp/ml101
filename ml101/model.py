@@ -75,9 +75,10 @@ class ML101Model:
 
 class Evaluators:
     """Evaluates model accuracy using a confusion matrix, precision/recall (f-1 score), and log-loss."""
-    def __init__(self, ytest_iterations: list, ypred_iterations: list):
-        self.ytest_iterations = ytest_iterations
-        self.ypred_iterations = ypred_iterations
+    def __init__(self, mlmodel: ML101Model):
+        self.mlmodel = mlmodel
+        self.ytest_iterations = self.mlmodel.ytest_iterations
+        self.ypred_iterations = self.mlmodel.ypred_iterations
         self.confusion_matrices = []
         self.loglosses = []
         self.rmses = []
@@ -151,6 +152,7 @@ class ParameterOptimizer(Evaluators):
     #TODO: use normalized mutual information score to evaluate how good the sampling was. Adjust sampling accordingly.
 
     def __init__(self, mlmodel: ML101Model):
+        super().__init__(mlmodel)
         self.mlmodel = mlmodel
 
     def adjust_with_pca(self):
