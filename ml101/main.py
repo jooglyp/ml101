@@ -17,7 +17,7 @@ def main():
         dataset.assignment_pca(fileobj)
     dataset.sample(assignment=True)
     xgboost_model = model.ML101Model(dataset.x_rnn_resampled, dataset.y_rnn_resampled,
-                                     dataset.X.columns, 'is_bad')
+                                     dataset.X.columns, 'is_bad', dataset.important_covariates)
     xgboost_model.assignment_fit()
 
     # Client-Side Simulation:

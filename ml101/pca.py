@@ -130,7 +130,8 @@ class ApplyPCA(CleanData):
         self.categorical_map = {}  # dictionary of tuples
         self.model_covariates = None
         self.excluded_variables = None  # subtracted from self.model_covariates in sampler.py
-        self.clientside_covariate_exclusion = []  # list of variables to exclude in clientside run with autorestriction.
+        self.clientside_covariate_exclusion = []  # list of variables to exclude in clientside run with autorestriction
+        self.feature_importance = None  # pandas dataframe of most important features
 
     @staticmethod
     def _categorical_encoding(vector: numpy.ndarray, _name: str) -> typing.Tuple[pandas.DataFrame, numpy.ndarray]:
@@ -299,6 +300,7 @@ class ApplyPCA(CleanData):
 
         feature_importance = pandas.DataFrame(self.rank_covariate_importance(important_names))
         LOGGER.info(feature_importance)
+        self.feature_importance = feature_importance
         return feature_importance
 
     def apply_pca(self, df: pandas.DataFrame, excluded_variables: list, assignment=False) -> \

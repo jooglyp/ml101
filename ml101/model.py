@@ -24,11 +24,13 @@ CLIENT = dask.distributed.Client()
 
 
 class ML101Model:
-    def __init__(self, X: numpy.ndarray, y: numpy.ndarray, xlabels: list, ylabel: str):
+    def __init__(self, X: numpy.ndarray, y: numpy.ndarray, xlabels: list, ylabel: str,
+                 important_covariates: pandas.DataFrame):
         self.X = da.from_array(X, chunks=X.shape)
         self.y = da.from_array(y, chunks=y.shape)
         self.xlabels = xlabels
         self.ylabel = ylabel
+        self.important_covariates = important_covariates
         self.ytest_iterations = []  # list to store kfold crossvalidation results
         self.ypred_iterations = []  # list to store kfold crossvalidation results
         self.predicted_probability_iterations = []  # list to store predicted probabilities
@@ -67,6 +69,99 @@ class ML101Model:
 
     def assignment_fit(self):
         self.kfold_cv()
+        optimizer = ParameterOptimizer(self)
+        optimizer.adjust_with_pca()
+
+
+class Evaluators:
+    """Evaluates model accuracy using a confusion matrix, precision/recall (f-1 score), and log-loss."""
+    def __init__(self, ytest_iterations: list, ypred_iterations: list):
+        self.ytest_iterations = ytest_iterations
+        self.ypred_iterations = ypred_iterations
+        self.confusion_matrices = []
+        self.loglosses = []
+        self.rmses = []
+        self.f1scores = []
+
+    def compute_rmse(self):
+        """RMSE Evaluation. Lower is better."""
+        for ytest, ypred in zip(self.ytest_iterations, self.ypred_iterations):
+            ytest = ytest.compute()
+            ypred = ypred.compute()
+
+            mse = mean_squared_error(ytest, ypred)
+            self.rmses.append(numpy.sqrt(mse))
+        utils.print_delimiter()
+        LOGGER.info(self.rmses)
+
+    def compute_f1score(self):
+        """RMSE Evaluation. Lower is better."""
+        for ytest, ypred in zip(self.ytest_iterations, self.ypred_iterations):
+            ytest = ytest.compute()
+            ypred = ypred.compute()
+
+            f1score = f1_score(ytest, ypred)
+            self.f1scores.append(f1score)
+        utils.print_delimiter()
+        LOGGER.info(self.f1scores)
+
+    def compute_confusion_matrices(self):
+        """
+        Compute true-negative, false-positive, false-negative, true-positive from accuracies; yield confusion-matrix.
+        Accuracy essentially fit + score and is interpreted as:
+        >>> y_pred = [0, 2, 1, 3,0]
+        >>> y_true = [0, 1, 2, 3,0]
+        >>> print(accuracy_score(y_true, y_pred))
+        >>> 0.6
+        Returns: a list of confusion matrix pandas DataFrames as a class attribute.
+
+        """
+        for ytest, ypred in zip(self.ytest_iterations, self.ypred_iterations):
+            ytest = ytest.compute()
+            ypred = ypred.compute()
+
+            insample_accuracy = accuracy_score(ypred, ytest)
+            tn, fp, fn, tp = confusion_matrix(ypred, ytest).ravel()
+            precision = tp / (tp + fp)
+            recall = tp / (tp + fn)
+            LOGGER.info('Accuracy: {}, Precision: {}, Recall: {}'.format(round(insample_accuracy, 2),
+                                                                         precision, recall))
+            self.confusion_matrices.append(pandas.DataFrame(confusion_matrix(ypred, ytest)))
+            utils.print_delimiter()
+            # LOGGER.info(self.confusion_matrices)
+
+    def compute_conditional_log_loss(self):
+        """
+        LogLoss Evaluation. Lower is better.
+        binary-logistic' uses -(y*log(y_pred) + (y-1)*(log(1-y_pred))
+        """
+        for ytest, ypred in zip(self.ytest_iterations, self.ypred_iterations):
+            ytest = ytest.compute()
+            ypred = ypred.compute()
+
+            logloss = log_loss(ytest, ypred, normalize=True)
+            self.loglosses.append(logloss)
+        utils.print_delimiter()
+        LOGGER.info(self.loglosses)
+
+
+class ParameterOptimizer(Evaluators):
+    """Evaluates model kfold crossvalidations to obtain optimized model parameters for best fit."""
+    #TODO: use grid search using scores as input, then adjusting pca and sampling params, and getting new scores output.
+    #TODO: use normalized mutual information score to evaluate how good the sampling was. Adjust sampling accordingly.
+
+    def __init__(self, mlmodel: ML101Model):
+        self.mlmodel = mlmodel
+
+    def adjust_with_pca(self):
+        self.compute_confusion_matrices()
+        self.compute_rmse()
+        self.compute_conditional_log_loss()
+        self.compute_f1score()
+
+#=======================================================================================#
+#=======================================================================================#
+#=======================================================================================#
 
 
 class ExecuteML101Model:
@@ -86,9 +181,9 @@ class ExecuteML101Model:
         dataset.clientside_pca(X)
         dataset.sample(y)
         mlmodel = ML101Model(dataset.x_rnn_resampled, dataset.y_rnn_resampled,
-                                     dataset.X.columns, 'is_bad')
+                             dataset.X.columns, 'is_bad', dataset.important_covariates)
         mlmodel.kfold_cv()
-        optimizer = ParameterOptimizer(mlmodel.ytest_iterations, mlmodel.ypred_iterations)
+        optimizer = ParameterOptimizer(mlmodel)
 
     def predict(self, X: pandas.DataFrame) -> pandas.DataFrame:
         #TODO: uses best xgb_est and X TESTSET to obtain out-of-sample predictions.
@@ -103,65 +198,3 @@ class ExecuteML101Model:
 
     def tune_parameters(self, X: pandas.DataFrame, y: numpy.ndarray) -> dict:
         return None
-
-
-class Evaluators:
-    """Evaluates model accuracy using a confusion matrix, precision/recall (f-1 score), and log-loss."""
-    def __init__(self, ytest_iterations: list, ypred_iterations: list):
-        self.ytest_iterations = ytest_iterations
-        self.ypred_iterations = ypred_iterations
-        self.confusion_matrices = []
-        self.loglosses = []
-        self.rmses = []
-
-    def compute_rmse(self):
-        """RMSE Evaluation. Lower is better."""
-        for ytest, ypred in zip(self.ytest_iterations, self.ypred_iterations):
-            mse = mean_squared_error(ytest, ypred)
-            self.rmses.append(numpy.sqrt(mse))
-        utils.print_delimiter()
-        LOGGER.info(self.rmses)
-
-    def compute_confusion_matrices(self):
-        """
-        Compute true-negative, false-positive, false-negative, true-positive from accuracies; yield confusion-matrix.
-        Accuracy essentially fit + score and is interpreted as:
-        >>> y_pred = [0, 2, 1, 3,0]
-        >>> y_true = [0, 1, 2, 3,0]
-        >>> print(accuracy_score(y_true, y_pred))
-        >>> 0.6
-        Returns: a list of confusion matrix pandas DataFrames as a class attribute.
-
-        """
-        for ytest, ypred in zip(self.ytest_iterations, self.ypred_iterations):
-            insample_accuracy = accuracy_score(ypred, ytest)
-            tn, fp, fn, tp = confusion_matrix(ypred, ytest).ravel()
-            precision = tp / (tp + fp)
-            recall = tp / (tp + fn)
-            LOGGER.info('Accuracy: {}, Precision: {}, Recall: {}'.format(round(insample_accuracy, 2),
-                                                                         precision, recall))
-            self.confusion_matrices.append(pandas.DataFrame(confusion_matrix(ypred, ytest)))
-            utils.print_delimiter()
-            LOGGER.info(self.confusion_matrices)
-
-    def compute_conditional_log_loss(self):
-        """
-        LogLoss Evaluation. Lower is better.
-        binary-logistic' uses -(y*log(y_pred) + (y-1)*(log(1-y_pred))
-        """
-        for ytest, ypred in zip(self.ytest_iterations, self.ypred_iterations):
-            logloss = log_loss(ytest, ypred, normalize=True)
-            self.loglosses.append(logloss)
-        utils.print_delimiter()
-        LOGGER.info(self.loglosses)
-
-
-class ParameterOptimizer(Evaluators, ML101Model, ApplyPCA, DataPreparer):
-    """Evaluates model kfold crossvalidations to obtain optimized model parameters for best fit."""
-    def __init__(self, ytest_iterations: list, ypred_iterations: list):
-        super().__init__(ytest_iterations, ypred_iterations)
-        self.ytest_iterations = ytest_iterations
-        self.ypred_iterations = ypred_iterations
-
-    #TODO: use grid search using scores as input, then adjusting pca and sampling params, and getting new scores output.
-    #TODO: use normalized mutual information score to evaluate how good the sampling was. Adjust sampling accordingly.
