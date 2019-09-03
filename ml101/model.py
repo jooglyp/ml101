@@ -2,30 +2,22 @@
 
 import itertools
 import logging
-import typing
 from statistics import mean
 
 import dask
 import dask.array as da
 import numpy
 import pandas
-import dask.dataframe as dd
 from dask.distributed import Client
 from dask_ml.model_selection import KFold
 from dask_ml.xgboost import XGBClassifier
-from xgboost import DMatrix
 from sklearn.externals import joblib
 from sklearn.metrics import (
     accuracy_score,
-    auc,
-    average_precision_score,
     confusion_matrix,
     f1_score,
     log_loss,
     mean_squared_error,
-    normalized_mutual_info_score,
-    precision_score,
-    recall_score,
 )
 from sklearn.preprocessing import MinMaxScaler
 
@@ -168,7 +160,6 @@ class Evaluators:
             self.confusion_matrices.append(
                 pandas.DataFrame(confusion_matrix(ypred, ytest))
             )
-            # LOGGER.info(self.confusion_matrices)
 
     def compute_conditional_log_loss(self) -> float:
         """
@@ -187,6 +178,7 @@ class Evaluators:
 
 class ParameterOptimizer(Evaluators):
     """Evaluates model kfold crossvalidations to obtain optimized model parameters for best fit."""
+
     # TODO: use normalized mutual information score to evaluate how good the sampling was. Adjust sampling accordingly.
 
     def tune(
@@ -249,7 +241,10 @@ class ParameterOptimizer(Evaluators):
 
     def evaluate(self) -> dict:
         """Return {'f1_score': 0.3, 'logloss': 0.7}"""
-        return {'f1_score': self.compute_f1score(), 'logloss': self.compute_conditional_log_loss()}
+        return {
+            "f1_score": self.compute_f1score(),
+            "logloss": self.compute_conditional_log_loss(),
+        }
 
 
 class XGBoostModel:
@@ -257,6 +252,15 @@ class XGBoostModel:
         self.original_model: ML101Model = None
         self.model: ML101Model = None
         self.optimiser: ParameterOptimizer = None
+
+    @staticmethod
+    def coerce_client_data(X: pandas.DataFrame) -> pandas.DataFrame:
+        dataset = sampler.DataPreparer()
+        dataset.clientside_pca(X, category_limit=50)
+        y = numpy.random.choice([0, 1], size=(len(X),), p=[1.0 / 3, 2.0 / 3])
+        dataset.sample(y)
+        #TODO: This was a short-hand way to obtain X; dataset.sample() should be refactored not to require y.
+        return X
 
     def fit(self, X: pandas.DataFrame, y: numpy.ndarray) -> None:
         """
@@ -300,6 +304,7 @@ class XGBoostModel:
         return self.model.predict(X)
 
     def predict_proba(self, X: pandas.DataFrame) -> numpy.ndarray:
+        X = self.coerce_client_data(X)
         return self.model.predict_probability(X)
 
     def evaluate(self, X: pandas.DataFrame, y: numpy.ndarray) -> dict:
@@ -307,23 +312,29 @@ class XGBoostModel:
         return self.optimiser.evaluate()
 
     def tune_parameters(self, X: pandas.DataFrame, y: numpy.ndarray) -> dict:
+        """
+        Examples:
+        >>> param_grid = [
+        >>>     ("grid_neighbors", [2]),
+        >>>     ("grid_sample_proportion", [0.9]),
+        >>>     ("category_limit", [10]),
+        >>>     ("pca_proportion", [0.95]),
+        >>>     ("pca_components", [4]),
+        >>> ]
+        >>> param_grid = [
+        >>>     ("grid_neighbors", [2, 3, 4]),
+        >>>     ("grid_sample_proportion", [0.9, 0.7, 0.5]),
+        >>>     ("category_limit", [10, 100, 300]),
+        >>>     ("pca_proportion", [0.95, 0.9, 0.8]),
+        >>>     ("pca_components", [4, 5, 6]),
+        >>> ]
+        """
         param_grid = [
             ("grid_neighbors", [2, 3, 4]),
             ("grid_sample_proportion", [0.9, 0.7, 0.5]),
             ("category_limit", [10, 100, 300]),
             ("pca_proportion", [0.95, 0.9, 0.8]),
             ("pca_components", [4, 5, 6]),
-        ]
-
-        #print(len(list(itertools.product(*[item[1] for item in param_grid]))))
-        #raise
-
-        param_grid = [
-            ("grid_neighbors", [2]),
-            ("grid_sample_proportion", [0.9]),
-            ("category_limit", [10]),
-            ("pca_proportion", [0.95]),
-            ("pca_components", [4]),
         ]
 
         dataset = sampler.DataPreparer()
@@ -356,5 +367,5 @@ class XGBoostModel:
                 best_parameters = kwargs
                 best_loss = loss
 
-        LOGGER.info('Best parameters: %s', best_parameters)
+        LOGGER.info("Best parameters: %s", best_parameters)
         return best_parameters
