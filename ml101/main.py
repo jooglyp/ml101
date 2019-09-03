@@ -24,8 +24,6 @@ def main():
 
     LOGGER.info(xgboost_model.evaluate(X, y))
     # Assuming X is a pandas dataframe...
-    # TODO: Make a fake X that might match the client side input
-    # TODO: Test the entire api. Call predict_proba and predict with a fake X
     # TODO: Make note that dask is not talking to local threads very well. Not an actual error.
     LOGGER.info(
         xgboost_model.predict_proba(pandas.DataFrame(xgboost_model.model.X.compute()))

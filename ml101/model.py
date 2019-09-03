@@ -2,12 +2,10 @@
 
 import itertools
 import logging
-import typing
 from statistics import mean
 
 import dask
 import dask.array as da
-import dask.dataframe as dd
 import numpy
 import pandas
 from dask.distributed import Client
@@ -16,18 +14,12 @@ from dask_ml.xgboost import XGBClassifier
 from sklearn.externals import joblib
 from sklearn.metrics import (
     accuracy_score,
-    auc,
-    average_precision_score,
     confusion_matrix,
     f1_score,
     log_loss,
     mean_squared_error,
-    normalized_mutual_info_score,
-    precision_score,
-    recall_score,
 )
 from sklearn.preprocessing import MinMaxScaler
-from xgboost import DMatrix
 
 from . import sampler
 
@@ -261,6 +253,15 @@ class XGBoostModel:
         self.model: ML101Model = None
         self.optimiser: ParameterOptimizer = None
 
+    @staticmethod
+    def coerce_client_data(X: pandas.DataFrame) -> pandas.DataFrame:
+        dataset = sampler.DataPreparer()
+        dataset.clientside_pca(X, category_limit=50)
+        y = numpy.random.choice([0, 1], size=(len(X),), p=[1.0 / 3, 2.0 / 3])
+        dataset.sample(y)
+        #TODO: This was a short-hand way to obtain X; dataset.sample() should be refactored not to require y.
+        return X
+
     def fit(self, X: pandas.DataFrame, y: numpy.ndarray) -> None:
         """
 
@@ -303,6 +304,7 @@ class XGBoostModel:
         return self.model.predict(X)
 
     def predict_proba(self, X: pandas.DataFrame) -> numpy.ndarray:
+        X = self.coerce_client_data(X)
         return self.model.predict_probability(X)
 
     def evaluate(self, X: pandas.DataFrame, y: numpy.ndarray) -> dict:
@@ -311,7 +313,7 @@ class XGBoostModel:
 
     def tune_parameters(self, X: pandas.DataFrame, y: numpy.ndarray) -> dict:
         """
-        Example:
+        Examples:
         >>> param_grid = [
         >>>     ("grid_neighbors", [2]),
         >>>     ("grid_sample_proportion", [0.9]),
@@ -319,8 +321,14 @@ class XGBoostModel:
         >>>     ("pca_proportion", [0.95]),
         >>>     ("pca_components", [4]),
         >>> ]
+        >>> param_grid = [
+        >>>     ("grid_neighbors", [2, 3, 4]),
+        >>>     ("grid_sample_proportion", [0.9, 0.7, 0.5]),
+        >>>     ("category_limit", [10, 100, 300]),
+        >>>     ("pca_proportion", [0.95, 0.9, 0.8]),
+        >>>     ("pca_components", [4, 5, 6]),
+        >>> ]
         """
-
         param_grid = [
             ("grid_neighbors", [2, 3, 4]),
             ("grid_sample_proportion", [0.9, 0.7, 0.5]),
