@@ -312,14 +312,15 @@ class XGBoostModel:
     def tune_parameters(self, X: pandas.DataFrame, y: numpy.ndarray) -> dict:
         """
         Example:
-        param_grid = [
-            ("grid_neighbors", [2]),
-            ("grid_sample_proportion", [0.9]),
-            ("category_limit", [10]),
-            ("pca_proportion", [0.95]),
-            ("pca_components", [4]),
-        ]
+        >>> param_grid = [
+        >>>     ("grid_neighbors", [2]),
+        >>>     ("grid_sample_proportion", [0.9]),
+        >>>     ("category_limit", [10]),
+        >>>     ("pca_proportion", [0.95]),
+        >>>     ("pca_components", [4]),
+        >>> ]
         """
+
         param_grid = [
             ("grid_neighbors", [2, 3, 4]),
             ("grid_sample_proportion", [0.9, 0.7, 0.5]),
