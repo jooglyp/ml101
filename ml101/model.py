@@ -168,7 +168,6 @@ class Evaluators:
             self.confusion_matrices.append(
                 pandas.DataFrame(confusion_matrix(ypred, ytest))
             )
-            # LOGGER.info(self.confusion_matrices)
 
     def compute_conditional_log_loss(self) -> float:
         """
@@ -311,23 +310,22 @@ class XGBoostModel:
         return self.optimiser.evaluate()
 
     def tune_parameters(self, X: pandas.DataFrame, y: numpy.ndarray) -> dict:
-        param_grid = [
-            ("grid_neighbors", [2, 3, 4]),
-            ("grid_sample_proportion", [0.9, 0.7, 0.5]),
-            ("category_limit", [10, 100, 300]),
-            ("pca_proportion", [0.95, 0.9, 0.8]),
-            ("pca_components", [4, 5, 6]),
-        ]
-
-        # print(len(list(itertools.product(*[item[1] for item in param_grid]))))
-        # raise
-
+        """
+        Example:
         param_grid = [
             ("grid_neighbors", [2]),
             ("grid_sample_proportion", [0.9]),
             ("category_limit", [10]),
             ("pca_proportion", [0.95]),
             ("pca_components", [4]),
+        ]
+        """
+        param_grid = [
+            ("grid_neighbors", [2, 3, 4]),
+            ("grid_sample_proportion", [0.9, 0.7, 0.5]),
+            ("category_limit", [10, 100, 300]),
+            ("pca_proportion", [0.95, 0.9, 0.8]),
+            ("pca_components", [4, 5, 6]),
         ]
 
         dataset = sampler.DataPreparer()

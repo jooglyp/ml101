@@ -123,8 +123,6 @@ class CleanData:
             elif column in self.categorical_covariates:
                 LOGGER.info("String Coercion")
                 self.dataset[column] = self.dataset[column].astype(str)
-        LOGGER.info(self.dataset)
-        LOGGER.info(self.dataset.dtypes)
 
 
 class ApplyPCA(CleanData):
@@ -152,11 +150,9 @@ class ApplyPCA(CleanData):
         Returns: matrix of integers that correspond to categorical variable.
 
         """
-        LOGGER.info(vector)
         dummy = OneHotEncoder(categories="auto")
         dummy_category = LabelEncoder()
         categories = numpy.zeros((vector.shape[0], 1))
-        LOGGER.info(categories)
 
         categorical_matrix = dummy_category.fit_transform(vector.reshape(-1, 1).ravel())
         categorical_matrix = dummy.fit_transform(
@@ -172,7 +168,6 @@ class ApplyPCA(CleanData):
         ]
 
         encoded_matrix_df = pandas.DataFrame(encoded_matrix)
-        LOGGER.info(encoded_matrix_df)
         return encoded_matrix_df, list(encoded_matrix.columns)
 
     def _encode_categoricals(
@@ -202,11 +197,6 @@ class ApplyPCA(CleanData):
                 if (
                     len(categories) > category_limit
                 ):  # skip covariate if more than limit param
-                    LOGGER.info(categorical_covariate)
-                    LOGGER.info(len(categories))
-                    LOGGER.info(category_limit)
-                    LOGGER.info(type(len(categories)))
-                    LOGGER.info(type(category_limit))
                     self.clientside_covariate_exclusion.append(categorical_covariate)
                 self.categorical_map[categorical_covariate] = (
                     categories,
@@ -223,7 +213,6 @@ class ApplyPCA(CleanData):
         Returns:
 
         """
-        # TODO: unit test that asserts that dataframes are of the same size
         LOGGER.info("Concatenating Dataframes")
         datas = functools.reduce(
             lambda left, right: pandas.merge(
@@ -253,8 +242,9 @@ class ApplyPCA(CleanData):
         """
 
         Args:
+            category_limit: number of pivoted encoded categories allowed per categorical variable
             categorical_restriction: list of variable names that will not be used in generating final dataset.
-
+            autorestrictions=False
         Returns: pandas dataframe.
 
         """
@@ -299,7 +289,6 @@ class ApplyPCA(CleanData):
             range(len(abs_components)),
             key=abs_components.__getitem__,
         )
-        LOGGER.info(target_indexes)
         return target_indexes, sum(abs_components)
 
     @staticmethod
@@ -330,7 +319,6 @@ class ApplyPCA(CleanData):
                     names[name] += 1
                 except KeyError:
                     names[name] = 1
-        LOGGER.info(names)
         return sorted(names.items(), key=lambda x: x[1], reverse=True)
 
     def yield_most_important_variables(
@@ -349,18 +337,15 @@ class ApplyPCA(CleanData):
             self.yield_two_third_covariates_by_component(component)
             for component in inverse_pca_model
         ]
-        LOGGER.info(list_top_third_variances)
 
         important_names = [
             self.most_important_names(importance_list, pca_data.columns)
             for importance_list in list_top_third_variances
         ]
-        LOGGER.info(important_names)
 
         feature_importance = pandas.DataFrame(
             self.rank_covariate_importance(important_names)
         )
-        LOGGER.info(feature_importance)
         self.feature_importance = feature_importance
         return feature_importance
 
@@ -372,9 +357,7 @@ class ApplyPCA(CleanData):
             df: pandas dataframe of X's that contains categorical encoded variables of the form ['X_1', 'X_2']
             excluded_variables: list of variables to exclude of the form ['X', 'Z']
         """
-        LOGGER.info(excluded_variables)
         excluded = []
-        LOGGER.info(df)
         for column in df.columns:
             for to_exclude in excluded_variables:
                 if column.startswith(to_exclude):
@@ -382,7 +365,6 @@ class ApplyPCA(CleanData):
                     self.excluded_variables.append(column)
                     break
         adjusted_df = df.drop(excluded, axis=1)
-        LOGGER.info(adjusted_df)
         return adjusted_df
 
     def correct_for_mar(
@@ -398,14 +380,12 @@ class ApplyPCA(CleanData):
 
         """
         excluded = []
-        LOGGER.info(df)
         for col in df.columns:
             vector = df[col]  # pandas.Series
             if (vector.isna().sum() / len(vector)) > threshold:
                 excluded.append(col)
                 self.excluded_variables.append(col)
         adjusted_df = df.drop(excluded, axis=1)
-        LOGGER.info(adjusted_df)
         return adjusted_df
 
     def check_id_list(self, model_vars: list) -> list:
@@ -421,15 +401,12 @@ class ApplyPCA(CleanData):
     def check_id(self, df: pandas.DataFrame) -> pandas.DataFrame:
         if "Id" in df.columns:
             adjusted_df = df.drop(["Id"], axis=1)
-            LOGGER.info(adjusted_df)
             return adjusted_df
         elif "id" in df.columns:
             adjusted_df = df.drop(["id"], axis=1)
-            LOGGER.info(adjusted_df)
             return adjusted_df
         elif "index" in df.columns:
             adjusted_df = df.drop(["index"], axis=1)
-            LOGGER.info(adjusted_df)
             return adjusted_df
         else:
             return df
@@ -449,9 +426,6 @@ class ApplyPCA(CleanData):
             df, 0.5
         )  # drop variables that will not covary much due to MAR
         df = self.check_id(df)
-        LOGGER.info(df.columns)
-        # LOGGER.info(self.excluded_variables)
-        LOGGER.info(df.columns)
         df.dropna(inplace=True)  # drop rows that contain nan across any covariates
         return df
 
@@ -482,7 +456,6 @@ class ApplyPCA(CleanData):
             pca = PCA(n_components=4)
         pca_model = pca.fit(z_data)
         pca_model_inv = pca_model.inverse_transform(numpy.eye(pca.n_components))
-        LOGGER.info(pca_model_inv)
 
         LOGGER.info("Explained Variance Ratios:")
         LOGGER.info(pca_model.explained_variance_ratio_)
@@ -497,8 +470,6 @@ class ApplyPCA(CleanData):
         model_variables = set(self.model_covariates) - set(self.excluded_variables)
         model_variables = list(model_variables)
         self.check_id_list(model_variables)
-        LOGGER.info(model_variables)
-        # TODO: utilize weak pca variances later on in fitting.
         return (
             self.yield_most_important_variables(z_data_df, pca_model_inv),
             model_variables,

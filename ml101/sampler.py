@@ -39,8 +39,6 @@ class DataPreparer:
         self.cleaned_data = pca_application.yield_clean_data(
             category_limit, autorestrictions=True
         )
-        LOGGER.info(self.cleaned_data)
-        LOGGER.info(self.cleaned_data.columns)
 
         # cleaned_data contains only X here.
         self.important_covariates, self.model_covariates = pca_application.apply_pca(
@@ -56,8 +54,6 @@ class DataPreparer:
         self.cleaned_data = pca_application.yield_clean_data(
             category_limit, categorical_restriction=["addr_state", "zip_code"]
         )
-        LOGGER.info(self.cleaned_data)
-        LOGGER.info(self.cleaned_data.columns)
         exclude_variables = [
             "mths_since_last_delinq",
             "mths_since_last_record",
@@ -87,12 +83,10 @@ class DataPreparer:
         pca_model = pca.fit(z_data)
         pca_ndarray = pca_model.transform(z_data)
         XPCA_df = pandas.DataFrame(pca_ndarray, columns=component_lables)
-        LOGGER.info(XPCA_df)
         return XPCA_df
 
     def resampling(self, neighbors: int, sample_proportion: float, pca_components: int):
         """Take PCA a second time and balance the sample according to proportion of y labels w.r.t. component X's."""
-        LOGGER.info(self.X)
         if len(self.X.columns) < pca_components:
             pca_components = round(
                 0.5 * len(self.X.columns)
@@ -103,14 +97,10 @@ class DataPreparer:
         self.x_random_resampled, self.y_random_resampled = self.random_undersampling(
             XPCA_df, self.y, sample_proportion
         )
-        LOGGER.info(self.x_random_resampled)
-        LOGGER.info(self.y_random_resampled)
 
         self.x_rnn_resampled, self.y_rnn_resampled = self.rnn_undersampling(
             XPCA_df, self.y, neighbors
         )
-        LOGGER.info(self.x_rnn_resampled)
-        LOGGER.info(self.y_rnn_resampled)
 
     def construct_new_covariates_list(
         self,
@@ -120,10 +110,6 @@ class DataPreparer:
     ) -> list:
         new_covariates = []
         secure_random = random.SystemRandom()
-        LOGGER.info(pca_proportion)
-        LOGGER.info(remaining_covariates_size)
-        LOGGER.info(round(pca_proportion * remaining_covariates_size))
-        LOGGER.info(remaining_covariates)
         if int(remaining_covariates_size) > 0:
             new_size = round(pca_proportion * remaining_covariates_size)
             for i in range(new_size):
@@ -134,7 +120,6 @@ class DataPreparer:
                 except TypeError:
                     LOGGER.info("exited covariate randomization")
                     break
-        LOGGER.info(new_covariates)
         return new_covariates
 
     def randomize_top_covariates(
@@ -145,27 +130,20 @@ class DataPreparer:
     ):
         if pca_importance is not None:
             LOGGER.info("Building a Random Top Covariates Filter")
-            LOGGER.info(pca_importance)
             base_covariates = pca_importance[
                 0
             ].values  # values of series, which are variable names
-            LOGGER.info(base_covariates)
-            LOGGER.info(model_covariates)
             remaining_covariates = [
                 cov for cov in model_covariates if cov not in base_covariates
             ]
-            LOGGER.info(remaining_covariates)
             remaining_covariates_size = len(remaining_covariates)
             new_covariates = self.construct_new_covariates_list(
                 remaining_covariates_size, remaining_covariates, pca_proportion
             )
-            LOGGER.info(new_covariates)
             new_base_covariates = self.construct_new_covariates_list(
                 len(base_covariates), base_covariates, pca_proportion
             )
-            LOGGER.info(new_base_covariates)
             self.model_covariates = list(new_base_covariates) + list(new_covariates)
-            LOGGER.info(self.model_covariates)
             return self.model_covariates
         else:
             return self.model_covariates
@@ -200,8 +178,6 @@ class DataPreparer:
             pca_importance, model_covariates, pca_proportion
         )
         X, y = self.prepare_data_for_sampling(self.model_covariates, y)
-        LOGGER.info(len(X))
-        LOGGER.info(len(y))
         self.resampling(neighbors, sample_proportion, pca_components)
 
     def split_data_for_sampling(
@@ -218,7 +194,6 @@ class DataPreparer:
         LOGGER.info("Original Dataset Size: {}".format(len(data)))
         LOGGER.info("Dropping row data across model covariates containing NaN values.")
         data.dropna(inplace=True)  # drop rows that contain nan across any covariates
-        LOGGER.info(data)
         self.X = data[data.columns.difference(["is_bad"])]
         self.X = self.check_id(self.X)
         LOGGER.info(
@@ -244,7 +219,6 @@ class DataPreparer:
         LOGGER.info("Dropping row data across model covariates containing NaN values.")
         data["actual_y"] = y
         data.dropna(inplace=True)  # drop rows that contain nan across any covariates
-        LOGGER.info(data)
         self.X = data[data.columns.difference(["actual_y"])]
         self.X = self.check_id(self.X)
         LOGGER.info(
@@ -256,15 +230,12 @@ class DataPreparer:
     def check_id(self, df: pandas.DataFrame) -> pandas.DataFrame:
         if "Id" in df.columns:
             adjusted_df = df.drop(["Id"], axis=1)
-            LOGGER.info(adjusted_df)
             return adjusted_df
         elif "id" in df.columns:
             adjusted_df = df.drop(["id"], axis=1)
-            LOGGER.info(adjusted_df)
             return adjusted_df
         elif "index" in df.columns:
             adjusted_df = df.drop(["index"], axis=1)
-            LOGGER.info(adjusted_df)
             return adjusted_df
         else:
             return df
@@ -281,8 +252,6 @@ class DataPreparer:
         Returns: resampled (undersampled) observations that reduce bias in the receiving operating characteristic (ROC).
 
         """
-        # TODO: unit test to ensure X and y lengths are the same
-        # TODO: unit test to ensure Id is not in x or y
         x = self.check_id(x)
         rnn_undersampler = RepeatedEditedNearestNeighbours(
             random_state=82,
@@ -322,8 +291,6 @@ class DataPreparer:
         Returns: resampled (undersampled) observations that reduce bias in the receiving operating characteristic (ROC).
 
         """
-        # TODO: unit test to ensure X and y lengths are the same
-        # TODO: unit test to ensure Id is not in x or y
         x = self.check_id(x)
         LOGGER.info(len(x))
         target_size = round(sample_proportion * len(x))
