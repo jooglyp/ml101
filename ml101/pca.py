@@ -434,9 +434,7 @@ class ApplyPCA(CleanData):
         else:
             return df
 
-    def _coerce_full_dataframe(
-        self, df: pandas.DataFrame, excluded_variables: list
-    ):
+    def _coerce_full_dataframe(self, df: pandas.DataFrame, excluded_variables: list):
         """
         Helper function for apply_pca()
         Args:
@@ -458,7 +456,7 @@ class ApplyPCA(CleanData):
         return df
 
     def apply_pca(
-        self, df: pandas.DataFrame, excluded_variables: list,
+        self, df: pandas.DataFrame, excluded_variables: list
     ) -> typing.Tuple[pandas.DataFrame, list]:
         """
         Identify non-numerical covariates and numerical covariates and apply pca.

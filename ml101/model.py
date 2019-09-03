@@ -7,13 +7,12 @@ from statistics import mean
 
 import dask
 import dask.array as da
+import dask.dataframe as dd
 import numpy
 import pandas
-import dask.dataframe as dd
 from dask.distributed import Client
 from dask_ml.model_selection import KFold
 from dask_ml.xgboost import XGBClassifier
-from xgboost import DMatrix
 from sklearn.externals import joblib
 from sklearn.metrics import (
     accuracy_score,
@@ -28,6 +27,7 @@ from sklearn.metrics import (
     recall_score,
 )
 from sklearn.preprocessing import MinMaxScaler
+from xgboost import DMatrix
 
 from . import sampler
 
@@ -187,6 +187,7 @@ class Evaluators:
 
 class ParameterOptimizer(Evaluators):
     """Evaluates model kfold crossvalidations to obtain optimized model parameters for best fit."""
+
     # TODO: use normalized mutual information score to evaluate how good the sampling was. Adjust sampling accordingly.
 
     def tune(
@@ -249,7 +250,10 @@ class ParameterOptimizer(Evaluators):
 
     def evaluate(self) -> dict:
         """Return {'f1_score': 0.3, 'logloss': 0.7}"""
-        return {'f1_score': self.compute_f1score(), 'logloss': self.compute_conditional_log_loss()}
+        return {
+            "f1_score": self.compute_f1score(),
+            "logloss": self.compute_conditional_log_loss(),
+        }
 
 
 class XGBoostModel:
@@ -315,8 +319,8 @@ class XGBoostModel:
             ("pca_components", [4, 5, 6]),
         ]
 
-        #print(len(list(itertools.product(*[item[1] for item in param_grid]))))
-        #raise
+        # print(len(list(itertools.product(*[item[1] for item in param_grid]))))
+        # raise
 
         param_grid = [
             ("grid_neighbors", [2]),
@@ -356,5 +360,5 @@ class XGBoostModel:
                 best_parameters = kwargs
                 best_loss = loss
 
-        LOGGER.info('Best parameters: %s', best_parameters)
+        LOGGER.info("Best parameters: %s", best_parameters)
         return best_parameters

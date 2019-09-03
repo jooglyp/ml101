@@ -44,8 +44,7 @@ class DataPreparer:
 
         # cleaned_data contains only X here.
         self.important_covariates, self.model_covariates = pca_application.apply_pca(
-            self.cleaned_data,
-            pca_application.clientside_covariate_exclusion,
+            self.cleaned_data, pca_application.clientside_covariate_exclusion
         )
 
     def assignment_pca(self, csv, category_limit: int) -> None:
