@@ -457,6 +457,7 @@ class ApplyPCA(CleanData):
         pca_model = pca.fit(z_data)
         pca_model_inv = pca_model.inverse_transform(numpy.eye(pca.n_components))
 
+        #TODO: should expand index elements in accordance to pca_components. This info isn't used either.
         LOGGER.info("Explained Variance Ratios:")
         LOGGER.info(pca_model.explained_variance_ratio_)
         component_feature_correlation = pandas.DataFrame(
