@@ -46,6 +46,11 @@ param_grid = [
 
 ## Notes on client-side integration:
 ```buildoutcfg
+# Required API methods are provided in model.py XGBoostModel()
+# Call order priority in python terminal:
+xgboost_model = model.XGBoostModel()
+xgboost_model.evaluate(X, y)
+
 # Please feed an X test set that resembles the training set.
 # Since data transformation is only applied during sampling, I will go ahead 
 # and apply the sampler to the client's data and treat it as if it were being split.
